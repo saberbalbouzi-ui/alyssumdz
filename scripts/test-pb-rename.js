@@ -37,10 +37,11 @@ const { chromium } = require("playwright");
   t("الضغط على القلم يحوّل الرابط إلى حقل تعديل مباشر في مكانه", await p.evaluate(() => { const i = document.querySelector("#pb-list .pbx-slugin"); return !!i && i.value === "bb-new" && document.activeElement === i; }));
   await p.keyboard.press("Escape"); await p.waitForTimeout(150);
   t("Esc يعيد الرابط كما كان", await p.evaluate(() => !document.querySelector("#pb-list .pbx-slugin") && /bb-new/.test(document.querySelector("#pb-list .pbx-url").innerHTML)));
-  await p.click('#pb-list .pbx-url button[title="تعديل الرابط"]'); await p.fill("#pb-list .pbx-slugin", "cc-final"); await p.keyboard.press("Enter"); await p.waitForTimeout(300);
-  await p.click('#pbx-ask [data-k="ok"]'); await p.waitForTimeout(1500);
+  await p.click('#pb-list .pbx-url button[title="تعديل الرابط"]'); await p.fill("#pb-list .pbx-slugin", "cc-final"); await p.keyboard.press("Enter"); await p.waitForTimeout(60);
+  t("القلم المباشر: بلا نافذة تأكيد، ويظهر الرابط الجديد فوراً بحالة «جارٍ الحفظ»", await p.evaluate(() => !document.getElementById("pbx-ask") && /cc-final/.test(document.querySelector("#pb-list .pbx-url").textContent) && /جارٍ الحفظ|cc-final/.test(document.querySelector("#pb-list .pbx-url").textContent)), await p.evaluate(() => document.querySelector("#pb-list .pbx-url").textContent));
+  await p.waitForTimeout(1500);
   const put2 = await p.evaluate(() => window.__put.slice());
-  t("Enter ثم تأكيد يغيّر الرابط فعلاً ويظهر في البطاقة", put2.includes("lp/cc-final/index.html") && await p.evaluate(() => /cc-final/.test(document.getElementById("pb-list").innerHTML)), put2);
+  t("Enter يغيّر الرابط فعلاً بلا تأكيد ويظهر في البطاقة", put2.includes("lp/cc-final/index.html") && await p.evaluate(() => /cc-final/.test(document.getElementById("pb-list").innerHTML)), put2);
   /* رابط معروض هو رابط المنتج (مسار): الحقل يحمل رابط الصفحة الحقيقي مع تنبيه لا اسم المنتج */
   await p.evaluate(async () => { Admin.products = [{ slug: "prodx", title: "م", route: "cc-final" }]; await PBAdmin.refresh(true); });
   await p.click('#pb-list .pbx-url button[title="تعديل الرابط"]'); await p.waitForTimeout(200);

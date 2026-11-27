@@ -5881,7 +5881,7 @@ ${this.quickImg(this.q.cover)}
     const box = btn && btn.closest(".pbx-url"); if (!box || box.dataset.ed) return; box.dataset.ed = "1"; const old = box.innerHTML, li = (this.list || []).find(x => x.slug === slug);
     const full = this._cleanOf ? this._cleanOf(slug, li && li.live) : "/lp/" + slug, own = full.endsWith(slug), dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host, pre = own ? full.slice(0, full.length - slug.length) : dom + "/";      /* الرابط المعروض قد يكون رابط المنتج (مسار الصفحة من الرئيسية: /tarkiz) لا رابط الصفحة نفسها فيُعرض الحقل برابط الصفحة الحقيقي مع تنبيه، لا باسم المنتج */
     box.innerHTML = `<span dir="ltr" style="display:inline-flex;align-items:center;gap:.3rem;flex-wrap:wrap"><span>${PB.esc(pre)}</span><input class="pbx-slugin" value="${PB.esc(slug)}" maxlength="60" spellcheck="false" autocapitalize="off" style="width:min(220px,46vw);padding:.3rem .5rem;border-radius:8px;font:inherit"><button type="button" class="small gold" data-ok="1">حفظ</button><button type="button" class="small gray" data-no="1">إلغاء</button>${own ? "" : `<small dir="rtl" style="flex-basis:100%;opacity:.8">الرابط المعروض (${PB.esc(full.replace(/^[^/]*\//, ""))}) رابط المنتج ويعرض هذه الصفحة؛ هذا الحقل يغيّر رابط الصفحة نفسها لا رابط المنتج</small>`}</span>`;
-    const inp = box.querySelector("input"), back = () => { delete box.dataset.ed; box.innerHTML = old; }, go = () => { this.doRename(slug, inp.value, back); };
+    const inp = box.querySelector("input"), back = () => { delete box.dataset.ed; box.innerHTML = old; }, ui = { back, busy: ns => { box.innerHTML = `<span dir="ltr" style="font-weight:700">${PB.esc(pre + ns)}/ <span style="opacity:.8">⏳ جارٍ الحفظ…</span></span>`; }, fail: m => { delete box.dataset.ed; box.innerHTML = old + `<small dir="rtl" style="display:block;color:#f87171;flex-basis:100%">❌ ${PB.esc(m)}</small>`; } }, go = () => { this.doRename(slug, inp.value, ui); };
     box.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.ok) go(); else if (b.dataset.no) back(); });
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } else if (e.key === "Escape") { e.preventDefault(); back(); } });
     inp.focus(); inp.select();
@@ -5889,15 +5889,16 @@ ${this.quickImg(this.q.cover)}
   async rename(slug) {
     PBApp.askText("اسم الرابط الجديد (حروف لاتينية صغيرة وأرقام وشرطات):", slug, raw => this.doRename(slug, raw), "تغيير الرابط");
   },
-  async doRename(slug, raw, back) {
+  async doRename(slug, raw, ui) {      /* ui (القلم المباشر): بلا نافذة تأكيد، يظهر الرابط الجديد فوراً بحالة «جارٍ الحفظ»، والخطأ يبقى مكتوباً في مكانه */
+    const back = ui && ui.back;
     const RES = [(typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "p", "p", "lp", "assets", "admin", "api", "supabase", "scripts", "releases", "platform", "php-edition", "sales", "dist", "apps-script", "blog", "policy", "editor", "extension", "docs", "saas", "node_modules", "cart", "shop", "account", "index"];
     const ns = String(raw == null ? "" : raw).trim().toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "").slice(0, 60);
     if (!ns) { toast("⚠️ اسم الرابط غير صالح: استعمل حروفاً لاتينية صغيرة وأرقاماً وشرطات"); return; }
     if (ns === slug) { if (back) back(); else toast("ℹ️ الرابط لم يتغيّر (هو نفسه الحالي)"); return; }
     if (RES.indexOf(ns) >= 0 || (this.list || []).some(x => x.slug === ns) || (!(typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) && ((typeof Admin !== "undefined" && Admin.products) || []).some(x => x.slug === ns))) { toast("⚠️ هذا الرابط مستعمل أو محجوز، اختر اسماً آخر"); return; }      /* مع بادئة المنتجات يجوز لصفحة اسم منتج (رابطه /produit/<اسم>) */
-    PBApp.ask("سيصبح رابط الصفحة «" + ns + "» ويحوّل الرابط القديم «" + slug + "» إلى الجديد (الروابط المنسوخة عن الرابط النظيف القديم قد تتوقف). متابعة؟", "تغيير الرابط", async () => {
+    const doIt = async () => {
     try {
-      toast("⏳ جارِ تغيير الرابط…");
+      if (ui) ui.busy(ns); else toast("⏳ جارِ تغيير الرابط…");
       const P = await this.load(slug); P.slug = ns;
       const html = PB.fullHtml(typeof PBBind !== "undefined" && PBBind.bakePage ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, PBApp.siteCtx()));
       await PBApp.putJson("lp/" + ns + "/index.html", html, "تغيير رابط صفحة هبوط: " + slug + " ← " + ns);
@@ -5911,8 +5912,10 @@ ${this.quickImg(this.q.cover)}
       let sha; try { sha = (await GH.getFile("lp/" + slug + "/index.html")).sha; } catch (e) { }
       await GH.putFile("lp/" + slug + "/index.html", btoa(unescape(encodeURIComponent(stub))), sha, "تحويل الرابط القديم " + slug + " ← " + ns);
       toast("✅ تغيّر الرابط إلى: " + ns); this.refresh(true);
-    } catch (e) { toast("❌ تعذّر تغيير الرابط: " + e.message); }
-    });
+    } catch (e) { toast("❌ تعذّر تغيير الرابط: " + e.message); if (ui && ui.fail) ui.fail("تعذّر تغيير الرابط: " + e.message); }
+    };
+    if (ui) return doIt();
+    PBApp.ask("سيصبح رابط الصفحة «" + ns + "» ويحوّل الرابط القديم «" + slug + "» إلى الجديد (الروابط المنسوخة عن الرابط النظيف القديم قد تتوقف). متابعة؟", "تغيير الرابط", doIt);
   },
   async exportPage(slug) {
     try { const p = await this.load(slug), a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(p, null, 1)], { type: "application/json" })); a.download = "page-" + slug + ".json"; a.click(); } catch (e) { toast("❌ " + e.message); }
