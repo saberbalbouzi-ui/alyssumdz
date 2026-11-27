@@ -23,11 +23,13 @@ const { chromium } = require("playwright");
       const labels = h.querySelectorAll(".fl-pk").length, cb = h.querySelector("#fl-pk-wa input[type=checkbox]"); cb.click(); await new Promise(r => setTimeout(r, 100)); const only = AdminFloat.data().wa.only.slice(), note = h.querySelector("#fl-pkn-wa").textContent;
       AdminFloat.pickFilter("wa", "واي"); const vis = [...h.querySelectorAll("#fl-pk-wa label")].filter(l => l.style.display !== "none").length;
       const wa = h.querySelector(".fl-card .fl-r input[dir=ltr]"), lbl = wa ? wa.closest(".fl-f").querySelector("label").textContent : "";
-      return { labels, only, note, vis, ph: wa && wa.placeholder, lbl }; });
+      const val = wa && wa.value; let sent = null; GH.cfg = () => ({ token: "x", owner: "o", repo: "r", branch: "main" }); GH.getFile = async () => ({ sha: "s" }); GH.putFile = async (pth, b64) => { sent = JSON.parse(decodeURIComponent(escape(atob(b64)))); return {}; }; await AdminFloat.save(); const savedEmpty = sent && sent.wa.number === ""; AdminFloat.set("wa", "number", "0770111222"); await AdminFloat.save(); const custom = sent && sent.wa.number;
+      return { labels, only, note, vis, val, lbl, savedEmpty, custom }; });
     t("خيار الصفحات/المنتجات المحدّدة يظهر في بطاقة كل أيقونة (3)", r.labels === 3, r);
     t("اختيار منتج يُسجَّل في الإعداد ويُحدّث الملاحظة", r.only.length === 1 && /ستظهر في 1 فقط/.test(r.note), r);
     t("البحث يفلتر القائمة", r.vis === 1, r);
-    t("رقم واتساب المتجر يظهر في إعداد الأيقونة (نصاً وplaceholder) من store.json", /\d{9,}/.test(r.ph || "") && r.lbl.includes("+" + r.ph), { ph: r.ph, lbl: r.lbl });
+    t("رقم واتساب المتجر المسجَّل يظهر كقيمة افتراضية في حقل الأيقونة (قابلة للتعديل)", /^\d{9,}$/.test(r.val || ""), { val: r.val, lbl: r.lbl });
+    t("حفظ الرقم المساوي لرقم المتجر يُسجَّله فارغاً (يتبع المتجر)", r.savedEmpty === true && r.custom === "0770111222", r);
     t("بلا أخطاء JS", errs.length === 0, errs); await p.close(); }
   { const cx = await b.newContext({ viewport: { width: 412, height: 800 }, serviceWorkers: "block" }), p = await cx.newPage(); let CFG = {};
     await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|supabase\.co|api\.alyssumhub/, r => r.abort());

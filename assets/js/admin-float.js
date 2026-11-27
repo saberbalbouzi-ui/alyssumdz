@@ -20,6 +20,7 @@ const AdminFloat = (() => {
   }
   async function save() {
     const c = S.c; c.updatedAt = new Date().toISOString();
+    if (c.wa && storeWa() && String(c.wa.number || "").replace(/\D/g, "") === storeWa()) c.wa.number = "";      /* الرقم المساوي لرقم المتجر يُحفظ فارغاً فيتبع المتجر إن تغيّر رقمه */
     try { localStorage.setItem(LOCAL, JSON.stringify(c)); } catch (e) { }
     if (!canRemote()) { S.localOnly = true; toast("💾 حُفظت محلياً — اربط النشر لتظهر على موقعك"); return draw(); }
     try {
@@ -41,7 +42,7 @@ const AdminFloat = (() => {
 
   function card(k) {
     const c = S.c[k], M = FI().META[k];
-    const spec = k === "wa" ? F("رقم واتساب (فارغ = رقم المتجر" + (storeWa() ? ": +" + storeWa() : "") + ")", inp(k, "number", c, 'dir="ltr" placeholder="' + esc(storeWa() || "213550000000") + '"')) + F("الرسالة الجاهزة", inp(k, "msg", c))
+    const spec = k === "wa" ? F("رقم واتساب (الافتراضي رقم المتجر، ويمكنك تغييره)", '<input dir="ltr" placeholder="213550000000" value="' + esc(c.number || storeWa()) + '" oninput="AdminFloat.set(\'wa\',\'number\',this.value)">' + (storeWa() ? '<button type="button" class="small gray" style="margin-top:.3rem" onclick="AdminFloat.useStoreWa()">↺ رقم المتجر +' + storeWa() + '</button>' : "")) + F("الرسالة الجاهزة", inp(k, "msg", c))
       : k === "tel" ? F("رقم الهاتف", inp(k, "number", c, 'dir="ltr" placeholder="0550000000"'))
         : F("صفحة فيسبوك (اسم المستخدم أو الرابط)", inp(k, "page", c, 'dir="ltr" placeholder="mypage أو facebook.com/mypage"'));
     return '<div class="fl-card"><div class="fl-h"><b>' + M.n + '</b><span class="fl-st ' + (c.on ? "on" : "off") + '" id="fl-st-' + k + '">' + (c.on ? "مفعّلة" : "معطّلة") + '</span><label class="sw" title="تفعيل/تعطيل"><input type="checkbox"' + (c.on ? " checked" : "") + ' onchange="AdminFloat.setOn(\'' + k + '\',this.checked)"><i></i></label></div>' +
@@ -87,6 +88,7 @@ const AdminFloat = (() => {
     try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (Array.isArray(j)) S.pages = j; } } catch (e) { }
     draw();
   }
+  function useStoreWa() { if (S.c && S.c.wa) { S.c.wa.number = ""; draw(); } }
   function reset() { if (!confirm("استرجاع الإعدادات الافتراضية للأيقونات الثلاث؟")) return; S.c = FI().defaults(); draw(); }
-  return { mount, save, set, setOn, reset, pick, pickFilter, data: () => S.c };
+  return { mount, save, set, setOn, reset, useStoreWa, pick, pickFilter, data: () => S.c };
 })();
