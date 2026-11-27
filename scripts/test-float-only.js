@@ -22,10 +22,12 @@ const { chromium } = require("playwright");
       const h = document.createElement("div"); h.style.cssText = "position:fixed;inset:0;z-index:9;overflow:auto;background:#fff"; document.body.appendChild(h); await AdminFloat.mount(h); await new Promise(r => setTimeout(r, 600));
       const labels = h.querySelectorAll(".fl-pk").length, cb = h.querySelector("#fl-pk-wa input[type=checkbox]"); cb.click(); await new Promise(r => setTimeout(r, 100)); const only = AdminFloat.data().wa.only.slice(), note = h.querySelector("#fl-pkn-wa").textContent;
       AdminFloat.pickFilter("wa", "واي"); const vis = [...h.querySelectorAll("#fl-pk-wa label")].filter(l => l.style.display !== "none").length;
-      return { labels, only, note, vis }; });
+      const wa = h.querySelector(".fl-card .fl-r input[dir=ltr]"), lbl = wa ? wa.closest(".fl-f").querySelector("label").textContent : "";
+      return { labels, only, note, vis, ph: wa && wa.placeholder, lbl }; });
     t("خيار الصفحات/المنتجات المحدّدة يظهر في بطاقة كل أيقونة (3)", r.labels === 3, r);
     t("اختيار منتج يُسجَّل في الإعداد ويُحدّث الملاحظة", r.only.length === 1 && /ستظهر في 1 فقط/.test(r.note), r);
     t("البحث يفلتر القائمة", r.vis === 1, r);
+    t("رقم واتساب المتجر يظهر في إعداد الأيقونة (نصاً وplaceholder) من store.json", /\d{9,}/.test(r.ph || "") && r.lbl.includes("+" + r.ph), { ph: r.ph, lbl: r.lbl });
     t("بلا أخطاء JS", errs.length === 0, errs); await p.close(); }
   { const cx = await b.newContext({ viewport: { width: 412, height: 800 }, serviceWorkers: "block" }), p = await cx.newPage(); let CFG = {};
     await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|supabase\.co|api\.alyssumhub/, r => r.abort());

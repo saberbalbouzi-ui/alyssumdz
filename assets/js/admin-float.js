@@ -4,6 +4,8 @@ const AdminFloat = (() => {
   const PATH = "assets/data/float-icons.json", LOCAL = "alyssum_float_cfg", $ = id => document.getElementById(id);
   const FI = () => window.FloatIcons, esc = s => (FI() ? FI().esc(s) : String(s == null ? "" : s));
   const S = { c: null, sha: null, loaded: false, localOnly: false, err: "", pages: [] };
+  /* رقم واتساب المتجر (الافتراضي حين يُترك رقم الأيقونة فارغاً): من إعدادات المتجر المحمَّلة، وإلا من store.json المنشور، وإلا من config */
+  const storeWa = () => String((window.STORE_ADMIN && window.STORE_ADMIN.wa) || S.storeWa || (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "").replace(/\D/g, "");
   const dec = raw => JSON.parse(decodeURIComponent(escape(atob(String(raw || "").replace(/\s/g, "")))));
   const enc = v => btoa(unescape(encodeURIComponent(JSON.stringify(v, null, 2))));
   const canRemote = () => (typeof PHPAPI !== "undefined" && PHPAPI.on && PHPAPI.on()) || (typeof GH !== "undefined" && GH.cfg && GH.cfg() && GH.cfg().token);
@@ -39,7 +41,7 @@ const AdminFloat = (() => {
 
   function card(k) {
     const c = S.c[k], M = FI().META[k];
-    const spec = k === "wa" ? F("رقم واتساب (فارغ = رقم المتجر)", inp(k, "number", c, 'dir="ltr" placeholder="213550000000"')) + F("الرسالة الجاهزة", inp(k, "msg", c))
+    const spec = k === "wa" ? F("رقم واتساب (فارغ = رقم المتجر" + (storeWa() ? ": +" + storeWa() : "") + ")", inp(k, "number", c, 'dir="ltr" placeholder="' + esc(storeWa() || "213550000000") + '"')) + F("الرسالة الجاهزة", inp(k, "msg", c))
       : k === "tel" ? F("رقم الهاتف", inp(k, "number", c, 'dir="ltr" placeholder="0550000000"'))
         : F("صفحة فيسبوك (اسم المستخدم أو الرابط)", inp(k, "page", c, 'dir="ltr" placeholder="mypage أو facebook.com/mypage"'));
     return '<div class="fl-card"><div class="fl-h"><b>' + M.n + '</b><span class="fl-st ' + (c.on ? "on" : "off") + '" id="fl-st-' + k + '">' + (c.on ? "مفعّلة" : "معطّلة") + '</span><label class="sw" title="تفعيل/تعطيل"><input type="checkbox"' + (c.on ? " checked" : "") + ' onchange="AdminFloat.setOn(\'' + k + '\',this.checked)"><i></i></label></div>' +
@@ -59,7 +61,7 @@ const AdminFloat = (() => {
         L.map(x => '<label class="fl-ck" data-t="' + esc((x.t + " " + x.s).toLowerCase()) + '"><input type="checkbox"' + (on.has(x.s) ? " checked" : "") + ' onchange="AdminFloat.pick(\'' + k + '\',\'' + esc(x.s) + '\',this.checked)"> ' + esc(x.t) + ' <small style="opacity:.6">' + x.k + '</small></label>').join("") + '</div>'
         : '<div class="hint">لا صفحات ولا منتجات لاختيارها بعد</div>') + '<div class="fl-r" style="margin-top:.5rem">' + F("وضع الظهور", sel(k, "scopeMode", c, [["only", "تظهر في المحدَّد فقط"], ["all", "تظهر في كل الصفحات (حسب الأنواع) وتُخصَّص على المحدَّد"]])) +
       (k === "wa" ? F("رسالة مخصصة على المحدَّد (فارغ = الرسالة الجاهزة العامة)", inp(k, "cmsg", c, 'placeholder="مرحباً، أريد الاستفسار عن هذا المنتج"')) : "") +
-      (k === "wa" || k === "tel" ? F("رقم بديل على المحدَّد (فارغ = الرقم الافتراضي)", inp(k, "cnum", c, 'dir="ltr" placeholder="الرقم الافتراضي"')) : "") + '</div>' + '<div class="hint" id="fl-pkn-' + k + '" style="margin:.2rem 0 0">' + (on.size ? "ستظهر في " + on.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع") + '</div></div>';
+      (k === "wa" || k === "tel" ? F("رقم بديل على المحدَّد (فارغ = الرقم الافتراضي)", inp(k, "cnum", c, 'dir="ltr" placeholder="' + esc((k === "wa" ? (c.number || storeWa()) : c.number) || "الرقم الافتراضي") + '"')) : "") + '</div>' + '<div class="hint" id="fl-pkn-' + k + '" style="margin:.2rem 0 0">' + (on.size ? "ستظهر في " + on.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع") + '</div></div>';
   }
   function pick(k, slug, on) { const a = new Set(S.c[k].only || []); on ? a.add(slug) : a.delete(slug); S.c[k].only = [...a]; const n = $("fl-pkn-" + k); if (n) n.textContent = a.size ? "ستظهر في " + a.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع"; }
   function pickFilter(k, q) { q = String(q || "").trim().toLowerCase(); const h = $("fl-pk-" + k); if (h) h.querySelectorAll("label").forEach(l => { l.style.display = !q || (l.dataset.t || "").includes(q) ? "" : "none"; }); }
@@ -81,6 +83,7 @@ const AdminFloat = (() => {
     const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=7207235c"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
     await need(); if (!window.FloatIcons) { host.innerHTML = '<div class="hint">تعذّر تحميل الأيقونات</div>'; return; }
     if (!S.loaded) await load();
+    try { const r = await fetch("assets/data/store.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); S.storeWa = (j && j.wa) || ""; } } catch (e) { }
     try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (Array.isArray(j)) S.pages = j; } } catch (e) { }
     draw();
   }
