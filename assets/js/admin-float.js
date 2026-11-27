@@ -57,7 +57,9 @@ const AdminFloat = (() => {
     return '<div class="fl-pk"><label style="font-weight:800;font-size:.82rem">صفحات أو منتجات محدّدة <span class="hint" style="margin:0">(اختياري — إن اخترتَ فلا تظهر الأيقونة إلا فيها، وإلا فحسب الأنواع أعلاه)</span></label>' +
       (L.length ? '<input type="search" placeholder="🔎 بحث" oninput="AdminFloat.pickFilter(\'' + k + '\',this.value)" style="margin:.3rem 0"><div class="fl-pkl" id="fl-pk-' + k + '" style="max-height:170px;overflow:auto;display:grid;gap:.15rem;border:1px solid rgba(128,140,150,.3);border-radius:10px;padding:.35rem .5rem">' +
         L.map(x => '<label class="fl-ck" data-t="' + esc((x.t + " " + x.s).toLowerCase()) + '"><input type="checkbox"' + (on.has(x.s) ? " checked" : "") + ' onchange="AdminFloat.pick(\'' + k + '\',\'' + esc(x.s) + '\',this.checked)"> ' + esc(x.t) + ' <small style="opacity:.6">' + x.k + '</small></label>').join("") + '</div>'
-        : '<div class="hint">لا صفحات ولا منتجات لاختيارها بعد</div>') + '<div class="hint" id="fl-pkn-' + k + '" style="margin:.2rem 0 0">' + (on.size ? "ستظهر في " + on.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع") + '</div></div>';
+        : '<div class="hint">لا صفحات ولا منتجات لاختيارها بعد</div>') + '<div class="fl-r" style="margin-top:.5rem">' + F("وضع الظهور", sel(k, "scopeMode", c, [["only", "تظهر في المحدَّد فقط"], ["all", "تظهر في كل الصفحات (حسب الأنواع) وتُخصَّص على المحدَّد"]])) +
+      (k === "wa" ? F("رسالة مخصصة على المحدَّد (فارغ = الرسالة الجاهزة العامة)", inp(k, "cmsg", c, 'placeholder="مرحباً، أريد الاستفسار عن هذا المنتج"')) : "") +
+      (k === "wa" || k === "tel" ? F("رقم بديل على المحدَّد (فارغ = الرقم الافتراضي)", inp(k, "cnum", c, 'dir="ltr" placeholder="الرقم الافتراضي"')) : "") + '</div>' + '<div class="hint" id="fl-pkn-' + k + '" style="margin:.2rem 0 0">' + (on.size ? "ستظهر في " + on.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع") + '</div></div>';
   }
   function pick(k, slug, on) { const a = new Set(S.c[k].only || []); on ? a.add(slug) : a.delete(slug); S.c[k].only = [...a]; const n = $("fl-pkn-" + k); if (n) n.textContent = a.size ? "ستظهر في " + a.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع"; }
   function pickFilter(k, q) { q = String(q || "").trim().toLowerCase(); const h = $("fl-pk-" + k); if (h) h.querySelectorAll("label").forEach(l => { l.style.display = !q || (l.dataset.t || "").includes(q) ? "" : "none"; }); }
@@ -76,7 +78,7 @@ const AdminFloat = (() => {
   }
   async function mount(host) {
     if (!host) return; host.id = "fl-host"; host.innerHTML = '<div class="hint">جارٍ التحميل…</div>';
-    const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=65b3fc68"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
+    const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=7207235c"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
     await need(); if (!window.FloatIcons) { host.innerHTML = '<div class="hint">تعذّر تحميل الأيقونات</div>'; return; }
     if (!S.loaded) await load();
     try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (Array.isArray(j)) S.pages = j; } } catch (e) { }

@@ -11,12 +11,12 @@ window.FloatIcons = (function () {
   const KEYS = ["wa", "tel", "msgr"];
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function defaults() {
-    const base = k => ({ on: false, side: "left", bottom: META[k].bottom, edge: 20, size: 56, shape: "circle", color: META[k].color, iconColor: "#ffffff", anim: k === "wa" ? "pulse" : "none", label: META[k].label, showLabel: "no", delay: 0, scroll: 0, device: "all", pages: { home: true, product: true, shop: true, other: true }, only: [], shadow: true });
+    const base = k => ({ on: false, side: "left", bottom: META[k].bottom, edge: 20, size: 56, shape: "circle", color: META[k].color, iconColor: "#ffffff", anim: k === "wa" ? "pulse" : "none", label: META[k].label, showLabel: "no", delay: 0, scroll: 0, device: "all", pages: { home: true, product: true, shop: true, other: true }, only: [], scopeMode: "only", cmsg: "", cnum: "", shadow: true });
     return { v: 1, wa: Object.assign(base("wa"), { number: "", msg: "مرحباً، أريد الاستفسار عن منتجاتكم" }), tel: Object.assign(base("tel"), { number: "" }), msgr: Object.assign(base("msgr"), { page: "" }) };
   }
   function norm(c) {
     const d = defaults(), o = c && typeof c === "object" ? c : {};
-    KEYS.forEach(k => { d[k] = Object.assign(d[k], o[k] || {}); d[k].pages = Object.assign(defaults()[k].pages, (o[k] || {}).pages || {}); d[k].only = Array.isArray((o[k] || {}).only) ? o[k].only.map(String).filter(Boolean) : []; });
+    KEYS.forEach(k => { d[k] = Object.assign(d[k], o[k] || {}); d[k].pages = Object.assign(defaults()[k].pages, (o[k] || {}).pages || {}); d[k].only = Array.isArray((o[k] || {}).only) ? o[k].only.map(String).filter(Boolean) : []; d[k].scopeMode = d[k].scopeMode === "all" ? "all" : "only"; d[k].cmsg = String(d[k].cmsg || ""); d[k].cnum = String(d[k].cnum || ""); });
     return d;
   }
   function telHref(n) { const d = String(n || "").replace(/[^\d+]/g, ""); if (!d) return ""; if (d.startsWith("+")) return "tel:" + d; if (d.startsWith("213")) return "tel:+" + d; if (d.startsWith("0") && d.length >= 9) return "tel:+213" + d.slice(1); return "tel:" + d; }
@@ -64,7 +64,8 @@ window.FloatIcons = (function () {
       let cfg = null; try { const r = await fetch(rel + "assets/data/float-icons.json", { cache: "no-store" }); if (r.ok) cfg = await r.json(); } catch (e) { }
       if (!cfg) return; cfg = norm(cfg); css(); const pt = pageType(), els = [];
       KEYS.forEach(k => {
-        const c = cfg[k], ob = onlyOk(c); if (!c.on || !deviceOk(c.device) || (ob === null ? !c.pages[pt] : !ob)) return;      /* قائمة «صفحات/منتجات محدّدة» غير فارغة ⟵ تظهر فيها وحدها بغضّ النظر عن أنواع الصفحات */
+        const c0 = cfg[k], ob = onlyOk(c0); if (!c0.on || !deviceOk(c0.device) || (ob === null || c0.scopeMode === "all" ? !c0.pages[pt] : !ob)) return;
+        const c = ob === true ? Object.assign({}, c0, { number: c0.cnum || c0.number, msg: c0.cmsg || c0.msg }) : c0;      /* على الصفحات/المنتجات المحدّدة: رسالة مخصّصة ورقم بديل (فارغ = الافتراضي) */      /* قائمة «صفحات/منتجات محدّدة» غير فارغة ⟵ تظهر فيها وحدها بغضّ النظر عن أنواع الصفحات */
         const a = el(k, c, false); if (!a) return; document.body.appendChild(a); els.push([a, c]);
         const show = () => { setTimeout(() => a.classList.add("in"), Math.max(0, (+c.delay || 0) * 1000)); };
         if (+c.scroll > 0) { const on = () => { if (window.scrollY >= +c.scroll) { removeEventListener("scroll", on); show(); } }; addEventListener("scroll", on, { passive: true }); on(); } else show();

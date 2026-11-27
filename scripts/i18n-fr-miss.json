@@ -885,5 +885,14 @@
  "ستظهر في": "Elle apparaîtra sur",
  "غير محدَّدة": "Non définie",
  "تظهر حسب الأنواع": "apparaît selon les types",
- "فقط": "uniquement"
+ "فقط": "uniquement",
+ "وضع الظهور": "Mode d'affichage",
+ "تظهر في المحدَّد فقط": "Visible uniquement sur la sélection",
+ "تظهر في كل الصفحات (حسب الأنواع) وتُخصَّص على المحدَّد": "Visible sur toutes les pages (selon les types), personnalisée sur la sélection",
+ "رسالة مخصصة على المحدَّد (فارغ": "Message personnalisé sur la sélection (vide",
+ "الرسالة الجاهزة العامة)": "message prêt général)",
+ "مرحباً، أريد الاستفسار عن هذا المنتج": "Bonjour, je souhaite me renseigner sur ce produit",
+ "رقم بديل على المحدَّد (فارغ": "Numéro différent sur la sélection (vide",
+ "الرقم الافتراضي)": "numéro par défaut)",
+ "الرقم الافتراضي": "Numéro par défaut"
 }
