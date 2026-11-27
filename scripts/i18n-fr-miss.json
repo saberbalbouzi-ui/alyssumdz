@@ -901,5 +901,17 @@
  "صفحة المتجر (كل المنتجات) وحساب الزبون والسلة": "Page boutique (tous les produits), compte client et panier",
  "رقم واتساب (الافتراضي رقم المتجر، ويمكنك تغييره)": "Numéro WhatsApp (par défaut celui de la boutique, modifiable)",
  "جارٍ الحفظ…": "Enregistrement…",
- "تعذّر تغيير الرابط:": "Impossible de changer le lien :"
+ "تعذّر تغيير الرابط:": "Impossible de changer le lien :",
+ "تحليل أداء موقعك للجوال والحاسوب مع قائمة الأخطاء وطريقة إصلاحها حتى": "Analyse des performances de votre site sur mobile et ordinateur, avec la liste des erreurs et leur correction jusqu'à",
+ "تخصيص نموذج الطلب الذي يملؤه الزبون في موقعك: ألوانه، حقوله، أزراره، العروض المعروضة فيه، ورقم واتساب": "Personnalisez le formulaire de commande que le client remplit sur votre site : couleurs, champs, boutons, offres affichées et numéro WhatsApp",
+ "اضغط زر «أفتح» في «أين تجده ؟»": "Cliquez sur « Ouvrir » dans « Où le trouver ? »",
+ "عدّل ألوان النموذج وحقوله وأزراره وعروضه ورقم واتساب": "Modifiez les couleurs, champs, boutons, offres et le numéro WhatsApp du formulaire",
+ "احفظ فتظهر التغييرات في نموذج الطلب على موقعك خلال دقيقة": "Enregistrez : les changements apparaissent dans le formulaire de commande de votre site en une minute",
+ "تبويب نموذج الطلب في لوحة التحكم": "Onglet Formulaire de commande du panneau",
+ "يُخفى قسم تخصيص نموذج الطلب من اللوحة ولا يتغيّر نموذج موقعك (تبقى إعداداتك المحفوظة كما هي)": "La section de personnalisation du formulaire de commande est masquée du panneau ; le formulaire de votre site ne change pas (vos réglages enregistrés restent)",
+ "يحلّل أداء موقعك للجوال والحاسوب، ويعرض قائمة الأخطاء وطريقة إصلاحها لتصل إلى": "Analyse les performances de votre site sur mobile et ordinateur et affiche la liste des erreurs et leur correction pour atteindre",
+ "ابدأ التحليل واقرأ نتيجة الجوال والحاسوب": "Lancez l'analyse et lisez le résultat mobile et ordinateur",
+ "طبّق الإصلاحات المقترحة ثم أعد التحليل": "Appliquez les corrections proposées puis relancez l'analyse",
+ "تبويب سرعة الموقع في لوحة التحكم": "Onglet Vitesse du site du panneau",
+ "يُخفى قسم تحليل سرعة الموقع من اللوحة ولا يتغيّر موقعك": "La section d'analyse de la vitesse est masquée du panneau ; votre site ne change pas"
 }

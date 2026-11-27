@@ -11,7 +11,7 @@ const AdminAddons = (() => {
   const fold = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[ً-ٰٟ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
   const ver = () => { const u = typeof AdminUpdate !== "undefined" && AdminUpdate.current; if (u) return String(u); const h = document.querySelector(".top h1"); const m = h && /(\d+\.\d+\.\d+)/.exec(h.title || ""); return m ? m[1] : "1.0"; };
   const first = d => String(d || "").replace(/\s+/g, " ").trim();      /* النص كاملاً (يقصّه CSS بثلاثة أسطر ويظهر كاملاً في التلميح) فيبقى مطابقاً لترجمته الفرنسية */
-  const OPEN = { builder: () => go("builder"), smart: () => go("pbgen"), imggen: () => go("imggen"), agent: () => go("agent"), voice: () => go("agent"), ask: () => { try { AdminHelp.show(); } catch (e) { } }, cloner: () => { try { NAV().clone(); } catch (e) { } }, protect: () => NAV().app("protect"), floaters: () => NAV().app("floaters") };
+  const OPEN = { builder: () => go("builder"), smart: () => go("pbgen"), imggen: () => go("imggen"), checkout: () => go("checkout"), speed: () => go("speed"), agent: () => go("agent"), voice: () => go("agent"), ask: () => { try { AdminHelp.show(); } catch (e) { } }, cloner: () => { try { NAV().clone(); } catch (e) { } }, protect: () => NAV().app("protect"), floaters: () => NAV().app("floaters") };
   function go(tab) { try { const b = [...document.querySelectorAll(".side-nav .nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + tab + "'")); Admin.tab(tab, b); } catch (e) { } }
 
   /* ── الكتالوج: إضافات المنصّة + أدوات ستوديو ديزاين ── */
