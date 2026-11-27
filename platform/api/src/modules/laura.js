@@ -82,10 +82,12 @@ export const laura = {
     const ctxOf = (mem, msg) => { const out = []; for (const x of mem.slice(-MAX_HIST)) { const role = x.r === "u" ? "user" : "model"; if (!out.length && role !== "user") continue; if (out.length && out[out.length - 1].role === role) out[out.length - 1].parts[0].text += "\n" + x.t; else out.push({ role, parts: [{ text: x.t }] }); } if (out.length && out[out.length - 1].role === "user") out[out.length - 1].parts[0].text += "\n" + msg; else out.push({ role: "user", parts: [{ text: msg }] }); return out; };
     const convSave = (tid, sub, arr) => db.run("INSERT INTO lr_conv (tenant_id,actor,msgs,updated_at) VALUES (?,?,?,?) ON CONFLICT(tenant_id,actor) DO UPDATE SET msgs=excluded.msgs, updated_at=excluded.updated_at", tid, sub, JSON.stringify(arr.slice(-MAX_MEM)), ctx.nowS());
     const pendingOf = async (tid, sub) => (await db.all("SELECT id,tool,summary,tool,expires_at FROM lr_pending WHERE tenant_id=? AND actor_sub=? AND state='pending' AND expires_at>? ORDER BY created_at LIMIT 10", tid, sub, ctx.nowS())).map((p) => ({ id: p.id, tool: p.tool, summary: p.summary, sensitive: !!toolByName(p.tool)?.sensitive, expires_in: p.expires_at - ctx.nowS() }));
-    const visible = (req, actor, caps = []) => visibleTools(req.scopes, actor, hasPerm, caps);
+    /* وضع «قراءة وتحليل فقط» (الافتراضي): أدوات الكتابة لا تُعرض للنموذج ولا تُنفَّذ ولا تُعتمد إلا إن ضُبط LAURA_WRITES=on صراحةً (يُفتح بعد اجتياز اختبارات الصلاحيات في الإنتاج) */
+    const writesOn = () => String(ctx.config?.LAURA_WRITES ?? "").trim().toLowerCase() === "on";
+    const visible = (req, actor, caps = []) => visibleTools(req.scopes, actor, hasPerm, caps).filter((t) => t.tier === "read" || writesOn());
 
     r.get("/v1/laura/health", { scope: "laura:chat", summary: "حالة LAURA: هل النموذج مُهيّأ على الخادم وهل الهوية الموقَّعة مطلوبة (بلا أسرار)" }, async (req) => {
-      return ok({ ok: true, llm_configured: llmConfigured(ctx.config), actor_required: !!secretOf(), tools_total: TOOLS.length, store: { name: String(req.tenant.name ?? "").slice(0, 80) } });
+      return ok({ ok: true, llm_configured: llmConfigured(ctx.config), actor_required: !!secretOf(), tools_total: TOOLS.length, writes_enabled: writesOn(), store: { name: String(req.tenant.name ?? "").slice(0, 80) } });
     });
     r.get("/v1/laura/history", { scope: "laura:chat", summary: "ذاكرة محادثة المستخدم في هذا المتجر (مشتركة بين لوحة التحكم وSpatial Core) + الإجراءات المعلّقة بانتظار موافقته + المتجر الحالي" }, async (req) => {
       const actor = await resolveActor(req), mem = await convLoad(req.tenant.id, actor.sub);
@@ -181,6 +183,7 @@ export const laura = {
       const t = toolByName(row.tool), M = MSG[row.lang] ?? MSG.ar, args = JSON.parse(row.args);
       if (!t || (await sha256Hex(row.tool + row.args)) !== row.args_hash) throw new HttpError(409, "integrity", "تعذّر التحقق من الإجراء");
       if (!b.approve) { await db.run("UPDATE lr_pending SET state='rejected', decided_at=? WHERE id=? AND state='pending'", now, row.id); await aud(actor, "laura.rejected", row.id, { tool: row.tool }); const rr = M.rejected(row.summary); await note(req.tenant.id, actor.sub, rr, b.client); return ok({ ok: true, state: "rejected", reply: rr }); }
+      if (t.tier !== "read" && !writesOn()) { await aud(actor, "laura.denied", row.id, { why: "writes_disabled", tool: t.name }); await db.run("UPDATE lr_pending SET state='rejected', decided_at=? WHERE id=? AND state='pending'", now, row.id); throw new HttpError(403, "writes_disabled", "عمليات الكتابة معطّلة في هذه البيئة (وضع قراءة وتحليل)"); }
       if (!(req.scopes.includes("*") || req.scopes.includes(t.scope)) || !hasPerm(actor, t.perm)) { await aud(actor, "laura.denied", row.id, { why: "no_permission_at_confirm", tool: t.name }); throw new HttpError(403, "forbidden", "لم تعد تملك صلاحية هذه العملية"); }
       if (t.exec === "client") {                                                                        // تنفّذه اللوحة: نُصدر الأمر مرة واحدة (claim ذرّي) وننتظر تقريرها خلال نافذة قصيرة
         const dc = await db.run("UPDATE lr_pending SET state='dispatched', decided_at=? WHERE id=? AND state='pending' AND expires_at>?", now, row.id, now); if (dc.changes !== 1) throw new HttpError(409, "already_decided", "الإجراء قيد التنفيذ أو مُنتهٍ");

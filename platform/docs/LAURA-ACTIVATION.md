@@ -1,19 +1,44 @@
-# تفعيل LAURA على الإنتاج — دليل الخطوات (2026-11-27)
+# تفعيل LAURA على الإنتاج — الخطة المعتمدة (الخيار A، 2026-11-27)
 
-**الحالة الفعلية (مقاسة اليوم):**
-- `https://api.alyssumhub.fyi/health` يعيد وحدات المنصة **بلا `laura`** ← الـWorker الإنتاجي لا يحمل وحدة LAURA ولا هجرتها.
-- دالة Supabase `platform-proxy` المنشورة هي النسخة 23 (2026-10-31): بلا مسارات LAURA ولا `LAURA_ACTOR_SECRET`.
-- لذلك زر LAURA في اللوحة يفتح «اسألني» مع إشعار «غير مفعَّلة» (تصحيح 1.89.1421)؛ وهذا السلوك صحيح حتى تكتمل الخطوات.
-- **ما لا أستطيع فعله من جلسة Claude:** الحساب الإنتاجي في Cloudflare (`1dffae72…`) خارج وصولي (رمز الوكيل منتهٍ؛ والمتاح لي حساب Beta فقط)، وسرّا LAURA (`LAURA_LLM_KEY` و`LAURA_ACTOR_SECRET`) يجب أن تُدخلهما أنت ولا يمرّان بي.
+**لم يُنشَر شيء على الإنتاج من جهتي.** كل ما يلي يُنفَّذ بيد مسؤول حساب Cloudflare/Supabase الإنتاجي بأسراره هو؛ لا تُرسَل أي مفاتيح أو رموز في المحادثة.
 
-## الخطوات (بالترتيب؛ كل خطوة إضافية وآمنة الرجوع إلا ما ذُكر)
-1. **تجهيز سرَّين** (على جهازك): `LAURA_ACTOR_SECRET` = نص عشوائي ≥ 32 حرفاً (مثلاً `openssl rand -hex 32`)، و`LAURA_LLM_KEY` = مفتاح مزوّد النموذج اللغوي. لا تكتبهما في محادثة ولا في المستودع.
-2. **هجرة D1** (إضافية: `CREATE TABLE IF NOT EXISTS` لجدولي `lr_pending` و`lr_conv`): تطبيق `platform/api/migrations/0002_laura.sql` على قاعدة الإنتاج `alyssum-platform-api` (أو الاسم المسجَّل في `platform/env/environments.json`).
-3. **أسرار الـWorker الإنتاجي:** `wrangler secret put LAURA_ACTOR_SECRET` و`wrangler secret put LAURA_LLM_KEY` (اختيارياً `LAURA_MODEL`).
-4. **نشر الـWorker:** `ALLOW_PRODUCTION_DEPLOY=yes CF_API_TOKEN=<رمز بصلاحية Workers+D1 للحساب الإنتاجي> node platform/api/tools/deploy.mjs --env production --production worker` (يرفض الأداة أي خلط مع Beta؛ `--dry-run` أولاً للتجربة بلا شبكة). **تنبيه:** هذا ينشر كود `platform/api` كاملاً من المستودع لا وحدة LAURA وحدها؛ قارن أولاً بالنسخة المنشورة (`git log platform/api`) كي لا يدخل تغيير غير مقصود.
-5. **نطاقات مفتاح الموقع** (المفتاح `pk_live_…` الذي تستعمله `platform-proxy`): إضافة `laura:chat` ونطاقات القراءة `orders:read catalog:read carts:read payments:read wallet:read` (وغيرها حسب ما تريد أن تقرأه LAURA)؛ الكتابة بموافقة فقط وتُضاف لاحقاً (`orders:write`…).
-6. **Supabase** (أسرار الدالة): `LAURA_ACTOR_SECRET` (**القيمة نفسها** في الخطوة 3) و`PLATFORM_TENANT_ID` (رقم مستأجر هذا الموقع في المنصة). تُدخَل القيمة في لوحة Supabase بيدك. ثم أنشر `platform/supabase/functions/platform-proxy/index.ts` (أستطيع نشره أنا بعد أن تؤكد أن الخطوات 2–5 تمّت).
-7. **تحقق:** `curl https://api.alyssumhub.fyi/health` يجب أن تظهر فيه `laura`؛ ثم زر LAURA في اللوحة يفتح المحادثة بدل «اسألني».
+## الحالة المقاسة
+- `https://api.alyssumhub.fyi/health`: وحدات المنصة **بلا `laura`**؛ والدالة المنشورة `platform-proxy` هي النسخة 23 بلا مسارات LAURA.
+- دالتا Supabase `staff_me` و`is_admin` موجودتان (SECURITY DEFINER، لـ`authenticated` فقط) — تحقق قراءة فقط.
+- زر LAURA يفتح «اسألني» مع إشعار «غير مفعَّلة» إلى أن تكتمل الخطوات (هذا السلوك سليم).
 
-## قبل أن تعوّل على إجاباتها
-LAURA تقرأ **من قاعدة المنصة (D1)** عبر مفتاح الموقع. تأكد أن طلبات متجرك ومنتجاته موجودة فعلاً في المنصة (وحدتا `commerce`/`sources` والمزامنة)؛ وإلا ستجيب بأرقام فارغة أو ناقصة. هذا لم أستطع فحصه (يحتاج المفتاح).
+## الخطوات (بالترتيب)
+1. **نسخة احتياطية أولاً:** `wrangler d1 export alyssum-platform-api --remote --output backup-$(date +%F).sql` (أو Time Travel: `wrangler d1 time-travel info`)؛ وسجّل رقم نسخة الـWorker الحالية (`node platform/api/tools/deploy.mjs --env production --production status`).
+2. **تجهيز السرَّين** على جهازك: `LAURA_ACTOR_SECRET` (≥32 حرفاً عشوائياً، `openssl rand -hex 32`) و`LAURA_LLM_KEY` (مفتاح مزوّد النموذج). لا تُكتب في أي ملف في المستودع.
+3. **هجرة D1** (إضافية `IF NOT EXISTS`): `platform/api/migrations/0002_laura.sql` ثم تحقق من وجود `lr_pending` و`lr_conv`.
+4. **أسرار Worker:** `wrangler secret put LAURA_ACTOR_SECRET` و`LAURA_LLM_KEY` (اختياري `LAURA_MODEL`). **لا تضبط `LAURA_WRITES`** — غيابه = وضع «قراءة وتحليل» (أدوات الكتابة لا تُعرض للنموذج ولا تُنفَّذ، وأي معلَّق قديم يُرفض `writes_disabled`).
+5. **dry-run + مقارنة (النشر يشمل الـWorker كاملاً لا LAURA وحدها):**
+   ```bash
+   ALLOW_PRODUCTION_DEPLOY=yes CF_API_TOKEN=… node platform/api/tools/deploy.mjs --env production --production diff
+   ALLOW_PRODUCTION_DEPLOY=yes node platform/api/tools/deploy.mjs --env production --production --dry-run --keep-existing worker
+   ```
+   `diff` (قراءة فقط) يعرض: ربطاً سيُحذف/يتغيّر، تاريخ التوافق، الجدولة (cron)، وفروق كل ملف كود مع تحذير لأي فرق خارج LAURA (يحجب تغييرات جانبية غير مقصودة: كود Beta/المحفظة/السوق…). لا تتابع إلا بعد مراجعة كل سطر «مخاطر».
+6. **نشر الـWorker:** `… deploy.mjs --env production --production --keep-existing worker` (في الإنتاج بلا `--keep-existing`/`--replace-bindings` يرفض النشر). `--keep-existing` يُبقي الربط والتوافق والجدولة المنشورة ويضبط ما نملكه فقط. ثم `status` وتحقق أن `/health` يُظهر `laura`.
+7. **مفتاح الموقع:** أضف إلى مفتاح `pk_live_…` الذي يستعمله الوسيط نطاق `laura:chat` ونطاقات القراءة اللازمة فقط (`orders:read`, `catalog:read`, `analytics`…؛ **بلا** `events:write` وكتابة الكتالوج في مرحلة القراءة). تأكد أن المفتاح مربوط بمستأجر متجرك لا بغيره.
+8. **`platform-proxy` — لا تستبدل عشوائياً:** النسخة المنشورة (v23) محفوظة هنا `platform/docs/laura-only/platform-proxy.v23.deployed.ts`. الكود الحالي في المستودع يضيف إلى LAURA مساراتٍ لا علاقة لها (شحن المحفظة `wallet/deposits`، السوق `marketplace`، `digital/wa`). لذلك جُهّزت نسخة **«LAURA فقط»**: `platform/docs/laura-only/platform-proxy/{index.ts,laura-actor.ts}`؛ فرقها عن v23 هو LAURA وحدها (استيراد، `ASECRET/TID`، فرع `isLauraPath` + ترويسة `X-Laura-Actor`؛ وفحص `is_admin` للمسارات الأخرى كما كان، لكن بعد قراءة جسم JSON). راجع الفرق بنفسك: `diff platform/docs/laura-only/platform-proxy.v23.deployed.ts platform/docs/laura-only/platform-proxy/index.ts`. تُختبر بالاختبارات نفسها: `PROXY_DIR=$PWD/platform/docs/laura-only/platform-proxy node platform/api/test/laura-proxy.test.mjs`.
+9. **أسرار Supabase للدالة:** `LAURA_ACTOR_SECRET` (**القيمة نفسها** في الخطوة 4) و`PLATFORM_TENANT_ID` (رقم مستأجر متجرك في المنصة). تُدخَل في لوحة Supabase وليس في المحادثة.
+10. **وصول بيانات المتجر إلى مصدر LAURA:** LAURA تقرأ من D1 المنصة عبر مفتاح الموقع. تأكد أن طلبات ومنتجات ومبيعات متجرك الفعلي موجودة هناك (عدّها في D1 `SELECT COUNT(*) FROM cm_orders WHERE tenant_id=?` ومن مصدر آخر: لوحتك). إن كانت صفرية فستجيب LAURA بصحة لكن عن «لا بيانات» — لا تُعلن قبل حلّ ذلك.
+
+## شروط القبول قبل أي إعلان (سكربت واحد)
+`/health` سليم لا يكفي. شغّل على جهازك بأسرارك أنت (لا يطبع سراً):
+```bash
+VERIFY_PROXY_URL=https://<مشروع>.supabase.co/functions/v1/platform-proxy VERIFY_JWT_OWNER=<جلسة المالك الحقيقية> \
+VERIFY_API=https://api.alyssumhub.fyi VERIFY_KEY_A=<مفتاح متجرك> VERIFY_KEY_B=<مفتاح متجر آخر> \
+VERIFY_ACTOR_SECRET=<نفس LAURA_ACTOR_SECRET> VERIFY_TID_A=<رقم مستأجرك> VERIFY_TID_B=<رقم المتجر الآخر> \
+VERIFY_JWT_STAFF=<جلسة موظف محدود> VERIFY_EXPECT_WRITES=off node platform/api/tools/laura-prod-verify.mjs
+```
+يثبت: دخول المالك الحقيقي عبر الوسيط (B1)، مطابقة ردّ LAURA لمصدر REST مستقل (C2)، رفض هوية/مفتاح متجر آخر وعدم تسرّب مراجع/هواتف (D1–D4)، محادثة بنموذج حقيقي وأداة قراءة تنجح (C1)، حجب بيانات الزبائن عن موظف محدود (F)، عدم ظهور أسرار/رموز في أي ردّ (G1)، ووضع الكتابة كما هو متوقع (A2/B2/E1). أي فحص يُتخطّى = `NOT PROVEN` (الخروج 3). **لا تُعلن قبل `ACCEPTANCE: PROVEN` دون تخطٍّ.**
+
+## فتح الكتابة (بعد نجاح مرحلة القراءة فقط)
+1. أضف نطاقات الكتابة اللازمة لمفتاح الموقع، واضبط `LAURA_WRITES=on` (متغيّر عادي، بلا إعادة نشر كود).
+2. أنشئ **طلب اختبار مخصّصاً** (وليس طلب زبون حقيقي) ثم شغّل السكربت بـ`VERIFY_EXPECT_WRITES=on VERIFY_WRITE_REF=<مرجعه> VERIFY_ALLOW_APPROVE=yes`: يثبت أن الكتابة تنتهي بإجراء معلّق لا ينفَّذ قبل الموافقة، وأن الموافقة تنفّذ وتتحقق (E3/E4) من مصدر مستقل.
+3. للتراجع الفوري: احذف `LAURA_WRITES` ← كل أدوات الكتابة تتعطّل فوراً.
+
+## ما اختُبر وما لم يُختبر
+- **اختُبر محلياً:** وحدة LAURA (274 فحصاً) ووضع القراءة (18) وسلسلة الوسيط↔Worker بنسختيه (18) ومنطق diff/الدمج (17) وسكربت القبول نفسه على Worker حقيقي في workerd بنموذج محاكى، ويلتقط الفشل (وضع كتابة خاطئ، سرّ مزروع، عزل). كشف هذا التشغيل خللاً حقيقياً: Worker لا يمرّر `LAURA_WRITES` من `env` (أُصلح، ويحرسه `test/config-passthrough.test.mjs`).
+- **لم يُجرَّب:** أي شيء على Cloudflare/Supabase الإنتاجيين؛ قراءة `diff` من واجهة Cloudflare الحقيقية (شكل الردود من التوثيق — شغّله أولاً وتحقق من قراءته للإعدادات)؛ `--keep-existing` على نشر حقيقي؛ نموذج لغوي حقيقي؛ دخول Supabase حقيقي؛ وصول بيانات المتجر الفعلية إلى D1.
