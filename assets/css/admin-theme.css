@@ -533,3 +533,5 @@ html.lang-fr body,html.lang-fr #app,html.lang-fr .modal,html.lang-fr .modal-bg{d
 html.lang-fr .top,html.lang-fr .card,html.lang-fr table th,html.lang-fr table td{text-align:left}
 html.lang-fr #ahome .ah-seg button,html.lang-fr .nav-btn,html.lang-fr .nav-txt{text-align:left}
 html.lang-fr #app .top>h1::before{font-size:.85rem}
+/* أدوات 3D ذات الخلفية الداكنة تبقى كتابتها فاتحة في المظهر الفاتح (قاعدة «كل الخطوط سوداء» كانت تُسوّد التسميات فوق لوح داكن فلا تُقرأ) */
+html.white :is(#bp-bg,#p3-bg,#i3-bg) :is(.hint,small,th,label,.field label,.stat span){color:rgba(244,249,252,.9)}

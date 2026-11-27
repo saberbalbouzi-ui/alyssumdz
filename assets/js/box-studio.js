@@ -29,7 +29,7 @@ const BoxStudio = (() => {
 #bs svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 #bs.d2 .tab[data-tab="layout"],#bs.d2 .tab[data-tab="video"],#bs.d2 .tab[data-tab="presets"],#bs.d2 .bar .open,#bs.d2 #bOrtho,#bs.d2 #bDims,#bs.d2 .bar .vsep{display:none!important}
 @media(min-width:821px){#bs #menuBtn,#bs #menu{display:none!important}}      /* زر «قائمة المشروع» (☰) لا يعمل على الحاسوب (تظهر القائمة شريطاً مقصوصاً تحت الشريط العلوي): محذوف هناك، والحفظ بزر 💾 */
-#bs .top{position:relative;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+#bs .top{color:var(--ink);position:relative;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
 #bs .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:21px;letter-spacing:.01em;white-space:nowrap}
 #bs .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
 #bs .brand .mark svg{width:20px;height:20px}
