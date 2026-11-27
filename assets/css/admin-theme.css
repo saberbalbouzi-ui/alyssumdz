@@ -535,3 +535,6 @@ html.lang-fr #ahome .ah-seg button,html.lang-fr .nav-btn,html.lang-fr .nav-txt{t
 html.lang-fr #app .top>h1::before{font-size:.85rem}
 /* أدوات 3D ذات الخلفية الداكنة تبقى كتابتها فاتحة في المظهر الفاتح (قاعدة «كل الخطوط سوداء» كانت تُسوّد التسميات فوق لوح داكن فلا تُقرأ) */
 html.white :is(#bp-bg,#p3-bg,#i3-bg) :is(.hint,small,th,label,.field label,.stat span){color:rgba(244,249,252,.9)}
+/* استوديو العلب داخل الثيم الفاتح: سطح داكن فالنص فاتح دائماً */
+html.white body.s3d-on #bs :is(.hint,small,th,label,.field label,.stat span,.muted){color:var(--ink)}
+html.white body.s3d-on #bs :is(input,select,textarea){background:var(--panel2);color:var(--ink);border-color:var(--line)}

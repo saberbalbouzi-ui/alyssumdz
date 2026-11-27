@@ -915,5 +915,15 @@
  "تبويب سرعة الموقع في لوحة التحكم": "Onglet Vitesse du site du panneau",
  "يُخفى قسم تحليل سرعة الموقع من اللوحة ولا يتغيّر موقعك": "La section d'analyse de la vitesse est masquée du panneau ; votre site ne change pas",
  "المحرّر": "Éditeur",
- "القوالب": "Modèles"
+ "القوالب": "Modèles",
+ "المقاس": "Taille",
+ "مربع 512×512 (موصى به)": "Carré 512×512 (recommandé)",
+ "أفقي 600×400": "Horizontal 600×400",
+ "صغير 256×256": "Petit 256×256",
+ "شعار من وصف": "Logo à partir d'une description",
+ "ولّد شعاراً": "Générer un logo",
+ "اكتب اسم العلامة أولاً": "Saisissez d'abord le nom de la marque",
+ "اعتمده أو غيّر النمط": "Validez-le ou changez de style",
+ "جارٍ التوليد": "Génération en cours",
+ "راجع الشعار ثم اعتمده": "Vérifiez le logo puis validez-le"
 }

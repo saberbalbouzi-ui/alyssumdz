@@ -168,7 +168,7 @@ const BoxStudio = (() => {
 #bs .tools .ib:disabled{opacity:.35;cursor:default}
 #bs .bar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;max-width:calc(100% - 20px)}
 #bs .bar>div{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:6px 8px;display:flex;align-items:center;gap:6px}
-#bs .bar .open{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);padding:0 6px}
+#bs .bar .open{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);padding:0 6px}#bs .bar #openR{direction:rtl}
 #bs .bar .open input{width:150px}
 #bs .bar .vsep{width:1px;height:24px;background:var(--line)}
 #bs .tip{position:absolute;inset-inline-start:14px;top:14px;background:var(--panel);border-radius:10px;box-shadow:var(--shadow);padding:6px 12px;font-size:12.5px;color:var(--muted);max-width:60%}
@@ -764,6 +764,24 @@ function profFaces(def){
 function buildProfile(d, def){
   const n = profNet(def); return n.mode==='net' ? buildProfileNet(def, n) : buildProfileSolid(def, n);
 }
+/* الوجوه العلوية للقالب المطويّ (ناظمها رأسي في أعلى العلبة وأمّها جدار): كل واحد منها وما يتفرّع عنه يدور حول مفصّله عند الفتح */
+function findLids(n){
+  if(!n || n.rule==='pyr' || n.rule==='flat') return null;
+  const Mf = BP().fold3d(n, 1).map(a=>new THREE.Matrix4().fromArray(a)), F = n.faces, V3 = THREE.Vector3, U = n.stand ? new V3(0,0,-1) : new V3(0,1,0);   /* القالب القائم على قاعدته مدوَّر 90° فالأعلى = −z */
+  const info = F.map((f,i)=>{ const c = f.poly.reduce((a,q)=>[a[0]+q[0]/f.poly.length, a[1]+q[1]/f.poly.length],[0,0]); const cw = new V3(c[0],c[1],0).applyMatrix4(Mf[i]); return {cw, h:cw.dot(U), ny:new V3(0,0,1).transformDirection(Mf[i]).dot(U)}; });
+  let y0 = 1e9, y1 = -1e9; F.forEach((f,i)=>f.poly.forEach(q=>{ const y = new V3(q[0],q[1],0).applyMatrix4(Mf[i]).dot(U); y0 = Math.min(y0,y); y1 = Math.max(y1,y); }));
+  const H = y1-y0; if(!(H > 1e-6)) return null;
+  let cand = F.map((f,i)=>i).filter(i=>F[i].parent>=0 && Math.abs(info[i].ny)>.9 && info[i].h > y1-.08*H && Math.abs(info[F[i].parent].ny)<.5);
+  if(cand.some(i=>F[i].main !== false)) cand = cand.filter(i=>F[i].main !== false);
+  if(!cand.length) return null;
+  return cand.map(c=>{
+    const f = F[c], P = new V3(f.p[0],f.p[1],0).applyMatrix4(Mf[f.parent]), Q = new V3(f.q[0],f.q[1],0).applyMatrix4(Mf[f.parent]), axis = Q.clone().sub(P).normalize();
+    const probe = sg=>info[c].cw.clone().sub(P).applyAxisAngle(axis, sg*Math.PI/2).dot(U);
+    const sign = probe(1) >= probe(-1) ? 1 : -1, ids = new Set();
+    F.forEach((g,i)=>{ let k = i; while(k >= 0){ if(k === c){ ids.add(i); break; } k = F[k].parent; } });
+    return {ids, axis, sign, P};
+  });
+}
 function buildProfileNet(def, n){
   const g = new THREE.Group(), ng = new THREE.Group(); g.add(ng); ng.scale.setScalar(S); if(n.stand) ng.rotation.x = Math.PI/2;
   const th = Math.min(1.2, Math.max(.3, state.t*.45)), eps = .06, fgs = [];
@@ -776,13 +794,16 @@ function buildProfileNet(def, n){
     const isMain = f.main !== false, pm = new THREE.Mesh(pg, isMain ? FC['f'+i].mat : FC.inside.mat); pm.position.z = eps; if(isMain) pm.userData.keys = {0:'f'+i}; pm.receiveShadow = true;
     const fg = new THREE.Group(); fg.add(em, pm); fg.matrixAutoUpdate = false; ng.add(fg); fgs.push(fg);
   });
-  /* الألسنة والأجنحة (غير الرئيسية) تُطوى تحت الوجوه الرئيسية: تُزاح للداخل عكس ناظمها الخارجي بسماكة الورق × عمق تداخلها */
+  /* غطاء العلبة: الفتح = دوران الوجه العلوي (أو الأجنحة العلوية) حول مفصّله إلى الأعلى والقاعدة ثابتة في الأسفل (لا فتح القالب مسطّحاً)؛ بلا غطاء مكتشف (هرم/صينية) يبقى الفتح فكَّ القالب */
+  const lids = findLids(n);
   const upd = o=>{
-    const t = 1-clamp(o,0,1), mats = BP().fold3d(n, t), k = t*t*(3-2*t);
+    o = clamp(o,0,1); const t = lids ? 1 : 1-o, mats = BP().fold3d(n, t), k = t*t*(3-2*t);
     fgs.forEach((fg,i)=>{
       const m = mats[i].slice(), f = n.faces[i];
       if(f.main === false && k > 0){ const d = (th*1.08 + eps)*Math.max(1,f.rank||1)*k; m[12] -= m[8]*d; m[13] -= m[9]*d; m[14] -= m[10]*d; }
-      fg.matrix.fromArray(m); fg.matrixWorldNeedsUpdate = true;
+      const M = new THREE.Matrix4().fromArray(m);
+      if(lids && o > 0) lids.forEach(L=>{ if(L.ids.has(i)) M.premultiply(new THREE.Matrix4().makeTranslation(L.P.x,L.P.y,L.P.z).multiply(new THREE.Matrix4().makeRotationAxis(L.axis, L.sign*o*(state.openMax||115)*Math.PI/180)).multiply(new THREE.Matrix4().makeTranslation(-L.P.x,-L.P.y,-L.P.z))); });
+      fg.matrix.copy(M); fg.matrixWorldNeedsUpdate = true;
     });
   };
   upd(0); g.updateMatrixWorld(true);
@@ -2763,7 +2784,7 @@ else if(host.opts && host.opts.model && MODELS[host.opts.model]){ selectModel(ho
 const po = host.opts && host.opts.profile;
 if(!co && !po && X.MK && MODELS.mailer && MODELS.mailer.hidden && !(host.opts && host.opts.model && MODELS[host.opts.model]) && MODELS.mk_r_box_ship){ _quietSel = true; selectModel('mk_r_box_ship'); _quietSel = false; X.fitCamera(); showTab('edit'); }
 if(po && MODELS['pf_'+po.key]){
-  const k = 'pf_'+po.key, m = MODELS[k]; state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = 1; state.openMax = 115; state.t = m.t || 1; state.accents = {}; state.material = 'kraft'; state.faces = {};
+  const k = 'pf_'+po.key, m = MODELS[k]; state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = 0; state.openMax = 115; state.t = m.t || 1; state.accents = {}; state.material = 'kraft'; state.faces = {};
   state.pf[po.key] = Object.assign({}, po.vals || {}); if(po.color && /^#[0-9a-f]{6}$/i.test(po.color) && po.color.toLowerCase() !== '#f1ece0'){ state.material = 'custom'; state.matColor = po.color; }
   X.rebuild(true); X.selectFace(Object.keys(FC)[0]); syncBar(); showTab('edit'); setTimeout(()=>{ if(R.isConnected) X.animateOpen(0); }, 600);
 }
