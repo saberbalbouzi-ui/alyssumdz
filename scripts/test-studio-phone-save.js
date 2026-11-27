@@ -1,4 +1,4 @@
-/* استوديو 3D على الهاتف: زر «حفظ» ظاهر داخل الشاشة ويفتح التصدير وينزّل صورة؛ و«ابدأ الآن» أسود بنص أبيض. NODE_PATH=/opt/node-tools/node_modules */
+/* استوديو 3D على الهاتف: زر «صورة» (تحميل) ظاهر داخل الشاشة ويفتح التصدير وينزّل صورة؛ و«ابدأ الآن» أسود بنص أبيض. NODE_PATH=/opt/node-tools/node_modules */
 const { chromium, devices } = require("playwright");
 (async () => {
   const b = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] }); let bad = 0; const t = (n, ok, x) => { console.log((ok ? "✓ " : "✗ ") + n + (ok ? "" : " " + JSON.stringify(x))); if (!ok) bad++; };
@@ -9,7 +9,7 @@ const { chromium, devices } = require("playwright");
   await p.goto("http://localhost:" + (process.env.PORT || 8765) + "/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(8000);
   await p.evaluate(async () => { document.getElementById("app").classList.remove("hidden"); await new Promise(r => setTimeout(r, 600)); Studio3D.open({ tab: "box" }); for (let i = 0; i < 40 && !document.getElementById("exportBtn"); i++) await new Promise(r => setTimeout(r, 300)); await new Promise(r => setTimeout(r, 2500)); });
   const ex = await p.evaluate(() => { const e = document.querySelector("#s3d-bar .ex"), r = e.getBoundingClientRect(); return { txt: e.innerText.trim(), vis: r.width > 0, right: Math.round(r.right), W: innerWidth, left: Math.round(r.left) }; });
-  t("زر «حفظ» ظاهر داخل الشاشة", /حفظ/.test(ex.txt) && ex.vis && ex.left >= 0 && ex.right <= ex.W, ex);
+  t("زر «صورة» (تحميل) ظاهر داخل الشاشة", /صورة/.test(ex.txt) && ex.vis && ex.left >= 0 && ex.right <= ex.W, ex);
   await p.click("#s3d-bar .ex"); await p.waitForTimeout(600);
   t("يفتح نافذة التصدير", await p.evaluate(() => document.getElementById("dExport").open), 0);
   const dl = p.waitForEvent("download", { timeout: 20000 }).catch(() => null); await p.evaluate(() => document.getElementById("exGo").click()); const d = await dl;
