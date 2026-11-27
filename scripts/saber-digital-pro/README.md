@@ -36,4 +36,4 @@ NODE_PATH=/opt/node-tools/node_modules SDP_AXE=/path/to/axe.min.js node scripts/
 ## النموذج
 بلا خادم: بعد التحقق يُجهَّز نص الطلب (بلغة الصفحة) ويختار الزائر الإرسال بواتساب (`wa.me/213697236128`) أو البريد (`mailto:saberdigitpro@gmail.com`) أو نسخه؛ ولا يُرسَل شيء قبل ضغطه إرسال في تطبيقه. بلا JavaScript يعمل `action="mailto:…"` احتياطاً. لإرسال مباشر من الصفحة يلزم نقطة نهاية خادم (لم تُحدَّد).
 
-الخطوط: Geist وInstrument Serif وIBM Plex Sans Arabic (رخصة OFL في `assets/fonts/LICENSES.txt`).
+الخط: Cairo المتغيّر (عربي + لاتيني، ملفان فقط ~65KB) (رخصة OFL في `assets/fonts/LICENSES.txt`).

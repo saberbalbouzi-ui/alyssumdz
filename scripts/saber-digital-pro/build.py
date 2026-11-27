@@ -61,7 +61,7 @@ def head(c, lang, ver):
     A, L = rel(lang)
     t, d = c["meta"]["title"], c["meta"]["description"]
     og = f"{BASE}/assets/og-{lang}.jpg"
-    pre = ['geist-latin-wght-normal.woff2', 'instrument-serif-latin-400-normal.woff2'] if lang != "ar" else ['ibm-plex-sans-arabic-arabic-400-normal.woff2', 'ibm-plex-sans-arabic-arabic-700-normal.woff2', 'geist-latin-wght-normal.woff2']
+    pre = ['cairo-latin-wght-normal.woff2'] if lang != "ar" else ['cairo-arabic-wght-normal.woff2', 'cairo-latin-wght-normal.woff2']
     alts = "".join(f'<link rel="alternate" hreflang="{l}" href="{URLS[l]}">' for l in LANGS) + f'<link rel="alternate" hreflang="x-default" href="{URLS["en"]}">'
     return f'''<!doctype html>
 <html lang="{lang}" dir="{c["dir"]}">
