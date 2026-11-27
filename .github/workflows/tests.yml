@@ -4,6 +4,10 @@ on:
   push:
     branches: ['**']
   pull_request:
+# تراكم الطابور: كل دفعة جديدة على الفرع نفسه تُلغي تشغيل الاختبارات الأقدم (لا يتغيّر ما يُفحص؛ يمنع ازدحام الطابور فلا يتأخر نشر الموقع)
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   domain:
     name: اختبارات المنطق (بلا متصفح)
