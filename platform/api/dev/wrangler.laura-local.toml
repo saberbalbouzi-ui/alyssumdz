@@ -13,6 +13,7 @@ database_id = "00000000-0000-0000-0000-000000000000"
 PLATFORM_SECRET = "local-dev-platform-secret-0123456789"
 ADMIN_TOKEN = "local-admin-token"
 LAURA_LLM_KEY = "mock-key"
+LAURA_WRITES = "on"   # المحاكاة المحلية تختبر الكتابة بالموافقة؛ الإنتاج الافتراضي «قراءة فقط»
 LAURA_LLM_ENDPOINT = "http://127.0.0.1:8799"
 LAURA_ACTOR_SECRET = "local-actor-secret-0123456789abcdef"
 LAURA_TIMEOUT_MS = "1500"

@@ -6,7 +6,7 @@ import { signActor } from "../src/laura/actor.js"; import { createMock, KEY, moc
 const { ok, done } = Tally();
 const SECRET = "actor-secret-0123456789abcdef";
 const mock = createMock();
-const E = makeEnv([commerce, carts, payments, wallet, ads, laura], { config: { LAURA_LLM_KEY: KEY, LAURA_ACTOR_SECRET: SECRET, LAURA_TIMEOUT_MS: "400" } }); E.fake.handler = mock.handler;
+const E = makeEnv([commerce, carts, payments, wallet, ads, laura], { config: { LAURA_LLM_KEY: KEY, LAURA_ACTOR_SECRET: SECRET, LAURA_TIMEOUT_MS: "400", LAURA_WRITES: "on" } }); E.fake.handler = mock.handler;
 const { call, adm, tenant, sql, sqlAll, clock, db } = E;
 const A = await tenant("A"), B = await tenant("B"), nowS = () => Math.floor(clock.t / 1000);
 const mkKey = async (t, scopes) => (await adm("POST", `/admin/tenants/${t.id}/keys`, { scopes }))[1].key;
