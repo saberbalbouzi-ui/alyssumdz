@@ -944,5 +944,13 @@
  "ماسح التجهيز": "Scanner de préparation",
  "امسح الباركود أو اكتب الرقم ثم": "Scannez le code-barres ou saisissez le numéro puis",
  "امسح الباركود أو اكتب الرقم ثم Enter": "Scannez le code-barres ou saisissez le numéro puis Entrée",
- "إيقاف الكاميرا": "Arrêter la caméra"
+ "إيقاف الكاميرا": "Arrêter la caméra",
+ "الاتصال بالزبائن وتأكيد الطلبات قبل التجهيز": "Appeler les clients et confirmer les commandes avant la préparation",
+ "تأكيدات اليوم": "Confirmations du jour",
+ "نسبة التأكيد": "Taux de confirmation",
+ "متبقية للتأكيد": "Restantes à confirmer",
+ "الطلبات الجديدة": "Nouvelles commandes",
+ "تأكيد الطلبات": "Confirmation des commandes",
+ "لا طلبات بانتظار الاتصال": "Aucune commande en attente d'appel",
+ "سيظهر الطلب الجديد هنا تلقائياً": "La nouvelle commande apparaîtra ici automatiquement"
 }

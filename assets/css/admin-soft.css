@@ -5,21 +5,21 @@
 .ord-head .ord-ic svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .ord-head h2{margin:0;font-size:1.45rem;line-height:1.2}
 .ord-head p{margin:.15rem 0 0;font-size:.82rem;opacity:.7}
-#tab-orders .ord-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin:0 0 .9rem}
-#tab-orders .ord-stats .os{border-radius:20px;padding:.8rem .5rem;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;gap:.3rem}
-#tab-orders .ord-stats .os svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
-#tab-orders .ord-stats .os span{font-size:.78rem;font-weight:700;opacity:.85;min-height:2.4em;display:flex;align-items:center;justify-content:center;line-height:1.2}
-#tab-orders .ord-stats .os b{font-size:1.7rem;line-height:1.1}
-@media(max-width:520px){#tab-orders .ord-stats{gap:.45rem}#tab-orders .ord-stats .os{padding:.65rem .25rem;border-radius:18px}#tab-orders .ord-stats .os span{font-size:.7rem}#tab-orders .ord-stats .os b{font-size:1.45rem}}
+.ord-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin:0 0 .9rem}
+.ord-stats .os{border-radius:20px;padding:.8rem .5rem;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.ord-stats .os svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.ord-stats .os span{font-size:.78rem;font-weight:700;opacity:.85;min-height:2.4em;display:flex;align-items:center;justify-content:center;line-height:1.2}
+.ord-stats .os b{font-size:1.7rem;line-height:1.1}
+@media(max-width:520px){.ord-stats{gap:.45rem}.ord-stats .os{padding:.65rem .25rem;border-radius:18px}.ord-stats .os span{font-size:.7rem}.ord-stats .os b{font-size:1.45rem}}
 /* ── المظهر الفاتح ── */
 html.white body{background:#f5f7fb}
 html.white .card{border-radius:22px;border:1px solid rgba(16,24,40,.05);box-shadow:0 10px 30px rgba(16,24,40,.06)}
 html.white .ord-head h2{color:#0f172a}
 html.white .ord-head .ord-ic{background:#eef9c9;color:#0f172a}
-html.white .ord-head .ord-ic svg,html.white #tab-orders .ord-stats .os svg{stroke:#0f172a!important}
-html.white #tab-orders .ord-stats .os{background:#fff;border:1px solid rgba(16,24,40,.06);box-shadow:0 6px 20px rgba(16,24,40,.06);color:#0f172a}
-html.white #tab-orders .ord-stats .os-g{background:#eaf7ee}
-html.white #tab-orders .ord-stats .os-o{background:#fff4e2}
+html.white .ord-head .ord-ic svg,html.white .ord-stats .os svg{stroke:#0f172a!important}
+html.white .ord-stats .os{background:#fff;border:1px solid rgba(16,24,40,.06);box-shadow:0 6px 20px rgba(16,24,40,.06);color:#0f172a}
+html.white .ord-stats .os-g{background:#eaf7ee}
+html.white .ord-stats .os-o{background:#fff4e2}
 
 /* ترتيب أزرار الطلبات: «إضافة طلب جديد» كبير ليموني، وتحته زرّان ناعمان متجاوران، ثم الشرائح والبحث */
 #tab-orders .card:has(#mo-btn){display:grid;grid-template-columns:1fr 1fr;gap:.6rem;align-items:stretch}
@@ -58,3 +58,23 @@ html.white body #pk button[data-pk=markSel][disabled]:not(#_){opacity:.55}
 #pk .action-bar{border:0!important;background:transparent!important;padding:0!important;box-shadow:none!important}
 #pk .card h2{font-size:1.15rem}
 #pk .ord-head h2{font-size:1.45rem}
+
+/* ── تأكيد الطلبات (مركز الاتصال #ccm) ── */
+#ccm .ccm-bar{gap:.4rem}
+html.white #ccm .ccm-chip{background:#fff;border:1px solid rgba(16,24,40,.07);box-shadow:0 3px 10px rgba(16,24,40,.05);color:#0f172a}
+html.white #ccm .ccm-card{background:#fff;border:1px solid rgba(16,24,40,.05);border-radius:24px;box-shadow:0 12px 32px rgba(16,24,40,.08)}
+#ccm .ccm-act{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:.55rem!important}
+#ccm .ccm-act>button{grid-column:span 6;border-radius:16px!important;min-height:52px;font-weight:800;justify-content:center}
+#ccm .ccm-act>button[data-d=noans],#ccm .ccm-act>button[data-d=wrong]{grid-column:span 3}
+#ccm .ccm-act>button[data-d=later],#ccm .ccm-act>button[data-d=tomorrow],#ccm .ccm-act>button[data-d=cancel]{grid-column:span 2!important;font-size:.88rem;padding-inline:.3rem}
+html.white body #ccm .ccm-act>button:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.1)!important;box-shadow:0 4px 12px rgba(16,24,40,.06)!important;text-shadow:none!important}
+html.white body #ccm .ccm-act>button[data-d=confirm]:not(#_){background:#e2fe17!important;color:#1f2123!important;border-color:#e2fe17!important;min-height:58px;font-size:1.15rem}
+html.white body #ccm .ccm-act>button[data-d=later]:not(#_),html.white body #ccm .ccm-act>button[data-d=tomorrow]:not(#_){background:#fff1dc!important;color:#b45309!important;border-color:#f6d9ad!important}
+html.white body #ccm .ccm-act>button[data-d=cancel]:not(#_){background:#fee2e2!important;color:#b91c1c!important;border-color:#fbc5c5!important}
+html.white body #ccm .ccm-act>button[data-d=skip]:not(#_){box-shadow:none!important;border-color:transparent!important;background:transparent!important}
+html.white #ccm .ccm-ph{color:#0f172a}
+html.white #ccm .ccm-quick a{background:#fff;border:1px solid rgba(16,24,40,.08);color:#0f172a;border-radius:14px}
+html.white #ccm .ccm-quick a.t{background:#e2fe17;border-color:#e2fe17;color:#1f2123}
+html.white #ccm .ccm-it{background:#f4f7fb;border-radius:16px}
+#ccm .ccm-act>button[data-d=confirm]{order:0}#ccm .ccm-act>button[data-d=addr]{order:1}#ccm .ccm-act>button[data-d=noans]{order:2}#ccm .ccm-act>button[data-d=wrong]{order:3}#ccm .ccm-act>button[data-d=later]{order:4}#ccm .ccm-act>button[data-d=tomorrow]{order:5}#ccm .ccm-act>button[data-d=cancel]{order:6}#ccm .ccm-act>button[data-d=skip]{order:7}
+@media(max-width:600px){#ccm .ccm-act .ccm-k{display:none}#ccm .ccm-act>button{font-size:.92rem}}
