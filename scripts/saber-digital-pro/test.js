@@ -1,6 +1,6 @@
 // SABER DIGITAL PRO landing page — acceptance tests (EN/FR/AR): SEO, links, responsive, RTL, accessibility (axe), form, language switcher, motion, no-JS.
 // Run: python3 -m http.server 8765 (repo root) ; NODE_PATH=/opt/node-tools/node_modules SDP_AXE=/path/to/axe.min.js node scripts/saber-digital-pro/test.js
-const { chromium } = require("playwright"); const fs = require("fs");
+const pw = require("playwright"), BT = process.env.SDP_BROWSER || "chromium", chromium = pw[BT]; const fs = require("fs"); const CR = BT === "chromium", FFX = BT === "firefox";
 const BASE = process.env.SDP_BASE_URL || "http://127.0.0.1:8765/lp/saber-digital-pro"; const AXE = process.env.SDP_AXE;
 const PAGES = { en: "/", fr: "/fr/", ar: "/ar/" }, PROD = "https://alyssumdz.com/lp/saber-digital-pro";
 const sleep = ms => new Promise(r => setTimeout(r, ms)); let pass = 0, fail = 0;
@@ -10,7 +10,7 @@ const reveal = async p => { await p.evaluate(async () => { for (let y = 0; y < d
   const br = await chromium.launch(); const content = {};
   for (const l of Object.keys(PAGES)) content[l] = JSON.parse(fs.readFileSync(__dirname + `/content/${l}.json`, "utf8"));
   for (const [lang, path] of Object.entries(PAGES)) {
-    const c = content[lang], T = lang; const ctx = await br.newContext({ viewport: { width: 1440, height: 900 }, permissions: ["clipboard-read", "clipboard-write"] }); const p = await ctx.newPage();
+    const c = content[lang], T = lang; const ctx = await br.newContext({ viewport: { width: 1440, height: 900 }, ...(CR ? { permissions: ["clipboard-read", "clipboard-write"] } : {}) }); const p = await ctx.newPage();
     const errs = [], bad = [], reqs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 100))); p.on("console", m => { if (m.type() === "error" || m.type() === "warning") errs.push(m.text().slice(0, 100)); });
     p.on("requestfailed", r => bad.push("failed " + r.url())); p.on("response", r => { reqs.push([r.url(), r.status()]); if (r.status() >= 400) bad.push(r.status() + " " + r.url()); });
     await p.goto(BASE + path, { waitUntil: "networkidle" }); await reveal(p);
@@ -74,13 +74,13 @@ const reveal = async p => { await p.evaluate(async () => { for (let y = 0; y < d
     ck(T, "valid submit: confirmation shown, localized message built (name/email/company/website/service/project), focus moved to confirmation", e3.ok && e3.formHidden && e3.msg.includes(c.form.msgIntro) && e3.msg.includes(L.name + ": Test Person") && e3.msg.includes(L.website + ": https://acme.ae/") && e3.msg.includes(L.service + ": ") && e3.focus === "form-ok", e3);
     ck(T, "WhatsApp link targets +213697236128 with the message; email link targets saberdigitpro@gmail.com with subject/body", e3.wa.startsWith("https://wa.me/213697236128?text=") && decodeURIComponent(e3.wa).includes("Test Person") && e3.mail.startsWith("mailto:saberdigitpro@gmail.com?subject=") && decodeURIComponent(e3.mail).includes("Acme"), [e3.wa.slice(0, 60), e3.mail.slice(0, 60)]);
     await p.click("#ok-copy"); await sleep(200); const cp = await p.evaluate(async () => ({ live: document.getElementById("ok-live").textContent, clip: await navigator.clipboard.readText().catch(() => "") }));
-    ck(T, "copy button copies the message and announces it", cp.live === c.form.success.copied && cp.clip.includes("Test Person"), cp);
+    ck(T, "copy button copies the message and announces it", cp.live === c.form.success.copied && (!CR || cp.clip.includes("Test Person")), cp);
     await p.click("#ok-edit"); await sleep(100); ck(T, "edit returns to the form with the data kept", await p.evaluate(() => document.getElementById("f-name").value === "Test Person" && getComputedStyle(document.getElementById("contact-form")).display !== "none"));
     // service CTA preselects
     await p.evaluate(() => { document.querySelectorAll("a[data-service]")[2].click(); }); await sleep(200); const sel = await p.evaluate(() => document.getElementById("f-service").value); ck(T, "'Start with this service' preselects that service in the form", sel === c.services.list[2].name, sel);
     await ctx.close();
     // mobile menu + tablet + reduced motion + no-JS
-    const mc = await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); const m = await mc.newPage(); await m.goto(BASE + path, { waitUntil: "load" });
+    const mc = await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: !FFX, hasTouch: !FFX }); const m = await mc.newPage(); await m.goto(BASE + path, { waitUntil: "load" });
     const nav0 = await m.evaluate(() => ({ btn: getComputedStyle(document.querySelector(".menu-btn")).display, inline: getComputedStyle(document.querySelector(".nav")).display, vis: getComputedStyle(document.getElementById("panel")).visibility }));
     await m.click(".menu-btn"); await sleep(500); const nav1 = await m.evaluate(() => ({ exp: document.querySelector(".menu-btn").getAttribute("aria-expanded"), vis: getComputedStyle(document.getElementById("panel")).visibility, focus: document.activeElement.closest("#panel") ? "in-panel" : document.activeElement.tagName, lock: document.documentElement.style.overflow }));
     await m.keyboard.press("Escape"); await sleep(450); const nav2 = await m.evaluate(() => ({ exp: document.querySelector(".menu-btn").getAttribute("aria-expanded"), vis: getComputedStyle(document.getElementById("panel")).visibility, focus: document.activeElement.className }));
