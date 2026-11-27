@@ -37,6 +37,7 @@
     if (!row) { row = document.createElement("div"); row.id = "ord-chiprow"; sb.after(row); }
     const ob = $("op-bar"); if (ob && ob.parentNode !== row) row.prepend(ob);
     const tg = $("of-tg"); if (tg && tg.parentNode !== row) { row.append(tg); }
+    if (tg && !tg.dataset.own) { tg.dataset.own = "1"; tg.removeAttribute("onclick"); tg.onclick = e => { e.preventDefault(); const m = $("of-more"); if (m) m.classList.toggle("open"); tg.classList.toggle("on", !!(m && m.classList.contains("open"))); }; }
     if (tg) { const want = T("فلاتر"); if (tg.dataset.lbl !== want || !tg.querySelector("svg")) { tg.dataset.lbl = want; tg.innerHTML = "<span>" + want + '</span><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>'; } else if (tg.querySelector("span") && tg.querySelector("span").textContent !== want) tg.querySelector("span").textContent = want; }
     const all = row.querySelector('.opv[data-v="all"]'); if (all) { const want = T("الكل") + " (" + list().length + ")"; if (all.textContent !== want) all.textContent = want; }
   }
@@ -64,12 +65,12 @@
     const head = mk("fl-head", '<span class="ord-ic">' + IC.flt + "</span><div><h3>" + T("فلاتر الطلبات") + "</h3><p>" + T("تصفية وبحث متقدم في الطلبات") + '</p></div><button type="button" class="fl-x" aria-label="×">×</button>');
     const tools = mk("fl-tools"); ["trash-btn", "arch-btn", "presend-btn"].forEach(id => tools.appendChild(mk("fl-c")).appendChild($(id)));
     const dates = sec("cal", "الفترة الزمنية", [dateF("order-filter-from"), dateF("order-filter-to")], "fl-wide fl-dates");
-    const ex = sec("cog", "خيارات إضافية", [$("order-show-shipped").closest("label")], "fl-wide");
+    const exL = $("order-show-shipped").closest("label"); if (exL) { exL.style.display = "none"; more.appendChild(exL); try { $("order-show-shipped").checked = false; localStorage.setItem("alyssum_show_shipped", "0"); if (Admin.orderFilters) Admin.orderFilters.showShipped = false; } catch (x) { } }      /* «إظهار المسجلة» محذوف من الواجهة (فلاتر المسجلة في الحالة)؛ يبقى الحقل مخفياً لمنطق الفلترة */
     const acts = mk("fl-acts"); [resetB, csvB, shB, keepBtns["sync-btn"], keepBtns["notify-btn"]].forEach(b => b && acts.appendChild(b));
     if (resetB) resetB.classList.add("fl-reset");
     const foot = mk("fl-foot", '<button type="button" class="fl-apply">' + IC.flt + "<span>" + T("تطبيق الفلاتر") + '</span></button><button type="button" class="fl-cancel"><span>' + T("إلغاء") + "</span> ×</button>");
     const imp = keepBtns["import-orders-btn"]; if (imp) imp.classList.add("fl-imp");
-    more.append(head, sec("box", "حالة الطلب", $("order-filter-status")), sec("cart", "السلال المتروكة", $("acr-btn")), tools, imp || "", sec("pin", "الولايات", $("order-filter-wilaya")), sec("lay", "المصادر", $("order-filter-src")), dates, ex, acts, foot);
+    more.append(head, sec("box", "حالة الطلب", $("order-filter-status")), sec("cart", "السلال المتروكة", $("acr-btn")), tools, imp || "", sec("pin", "الولايات", $("order-filter-wilaya")), sec("lay", "المصادر", $("order-filter-src")), dates, acts, foot);
     const close = () => { more.classList.remove("open"); };
     more.addEventListener("click", e => { if (e.target.closest(".fl-x,.fl-cancel")) close(); else if (e.target.closest(".fl-apply")) { try { Admin.applyOrderFilters(); } catch (x) { } close(); } });
   }
