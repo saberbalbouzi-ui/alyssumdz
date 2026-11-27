@@ -12,7 +12,6 @@ LANGS = ["en", "fr", "ar"]
 URLS = {"en": BASE + "/", "fr": BASE + "/fr/", "ar": BASE + "/ar/"}
 WA, WA_SHOW, EMAIL = "213697236128", "+213 697 23 61 28", "saberdigitpro@gmail.com"
 NAME = "SABER DIGITAL PRO"
-SECTIONS = ["services", "work", "approach", "why", "industries", "faq"]
 
 def esc(s): return html.escape(str(s), quote=True)
 def em(s):  return re.sub(r"\*([^*]+)\*", r"<em>\1</em>", esc(s))
@@ -103,97 +102,119 @@ def header(c, lang):
 <div class="panel" id="panel" aria-hidden="true"><nav aria-label="{esc(c["ui"]["mainNav"])}">{"".join(f'<a href="#{i["id"]}">{esc(i["label"])}{ic("arrow","arr")}</a>' for i in c["nav"]["items"])}</nav><a class="btn primary" href="#contact">{esc(c["nav"]["cta"])}{ic("arrow","arr")}</a></div>
 <main id="main">'''
 
-RINGS = '''<svg class="rings" viewBox="0 0 400 400" aria-hidden="true" focusable="false"><g fill="none" stroke="rgba(255,255,255,.14)"><circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="140" stroke-dasharray="2 8"/><circle cx="200" cy="200" r="92"/></g>
-<g class="ring"><circle cx="200" cy="200" r="190" fill="none" stroke="#c9ff2f" stroke-width="1.4" stroke-dasharray="90 1104" stroke-linecap="round"/><circle cx="390" cy="200" r="5" fill="#c9ff2f"/></g>
-<g class="ring r2"><circle cx="200" cy="200" r="140" fill="none" stroke="rgba(201,255,47,.55)" stroke-dasharray="40 840" stroke-linecap="round"/><circle cx="340" cy="200" r="3.500" fill="#c9ff2f"/></g>
-<g class="ring r3"><circle cx="200" cy="200" r="92" fill="none" stroke="rgba(255,255,255,.4)" stroke-dasharray="20 558" stroke-linecap="round"/></g></svg>'''
+def sh(n, hid, eyebrow, title, lead=""):
+    """رأس قسم تحريري: رقم + عنوان صغير على جانب، والعنوان الكبير والمقدمة على الجانب الآخر."""
+    return (f'<div class="sh"><p class="eyebrow rv"><span class="sn">{n:02d}</span>{esc(eyebrow)}</p><div class="st">'
+            f'<h2 class="h2 rv" id="{hid}" style="--d:.06s">{em(title)}</h2>' + (f'<p class="lead rv" style="--d:.12s">{esc(lead)}</p>' if lead else "") + '</div></div>')
 
 def hero(c):
-    h = c["hero"]; v = h["visual"]
-    cards = "".join(f'<div class="fc {k}"><small>{esc(x["k"])}</small><p>{esc(x["t"])}</p><div class="bars" aria-hidden="true"><i></i><i></i><i></i></div></div>' for k, x in zip("abc", v["cards"]))
+    h = c["hero"]; j = h["journey"]; sp = h["specimen"]; pr = h["proof"]
+    jr = "".join(f'<li{" class=end" if k == len(j["items"]) - 1 else ""}><span class="n" aria-hidden="true">{esc(x["n"])}</span><div class="b"><b>{esc(x["k"])}</b><span class="d">{esc(x["t"])}</span></div><span class="g">{esc(x["g"])}</span></li>' for k, x in enumerate(j["items"]))
+    spec = "".join(f'<li><span class="lg" aria-hidden="true">{esc(x["lang"].upper())}</span><span lang="{x["lang"]}" dir="{x["dir"]}">{esc(x["text"])}</span></li>' for x in sp["items"])
+    links = "".join(f'<li><a href="#{l["id"]}">{esc(l["label"])}{ic("arrow","arr")}</a></li>' for l in pr["links"])
     return f'''<section class="hero" id="top" aria-labelledby="h-hero"><div class="wrap"><div class="grid">
-<div><p class="eyebrow rv">{esc(h["eyebrow"])}</p><h1 class="h1 rv" id="h-hero" style="--d:.08s">{em(h["title"])}</h1><p class="lead rv" style="--d:.16s">{esc(h["lead"])}</p>
-<div class="cta-row rv" style="--d:.24s"><a class="btn primary" href="#contact">{esc(h["ctaPrimary"])}{ic("arrow","arr")}</a><a class="btn ghost" href="#services">{esc(h["ctaSecondary"])}</a></div>
-<ul class="tags rv" style="--d:.32s" aria-label="{esc(v["label"])}">{"".join(f"<li>{esc(t)}</li>" for t in h["tags"])}</ul></div>
-<div class="hv rv" style="--d:.2s" role="img" aria-label="{esc(v["label"])}">{RINGS}{cards}<span class="cap">{esc(v["caption"])}</span></div>
+<div class="hl"><p class="eyebrow rv">{esc(h["eyebrow"])}</p><h1 class="h1 rv" id="h-hero" style="--d:.06s">{em(h["title"])}</h1><p class="lead rv" style="--d:.12s">{esc(h["lead"])}</p>
+<div class="cta-row rv" style="--d:.18s"><a class="btn primary" href="#contact">{esc(h["ctaPrimary"])}{ic("arrow","arr")}</a><a class="btn ghost" href="#proof">{esc(h["ctaSecondary"])}</a></div>
+<div class="insp rv" style="--d:.24s"><p class="lb">{ic("info")}<span>{esc(pr["label"])}</span></p><p class="tx">{esc(pr["text"])}</p><ul>{links}</ul></div></div>
+<div class="hr rv" style="--d:.16s"><div class="jr"><p class="lb" id="jr-l">{esc(j["label"])}</p><ol aria-labelledby="jr-l">{jr}</ol></div>
+<div class="spc"><p class="lb" id="sp-l">{esc(sp["label"])}</p><ul aria-labelledby="sp-l">{spec}</ul><p class="cap">{esc(sp["caption"])}</p></div></div>
 </div></div></section>'''
 
 def intro(c):
     i = c["intro"]
-    pil = "".join(f'<li class="rv" style="--d:{.08*k}s"><span class="n">{esc(p["n"])}</span><h3>{esc(p["t"])}</h3><p>{esc(p["d"])}</p></li>' for k, p in enumerate(i["pillars"]))
-    return f'''<section class="intro sec" id="positioning" aria-labelledby="h-intro"><div class="wrap"><div class="cols"><div><p class="eyebrow rv">{esc(i["eyebrow"])}</p><h2 class="h2 rv" id="h-intro" style="--d:.08s;margin-block-start:1.3rem">{em(i["title"])}</h2></div><div class="txt rv" style="--d:.16s">{"".join(f"<p>{esc(p)}</p>" for p in i["paragraphs"])}</div></div><ul class="pillars">{pil}</ul></div></section>'''
+    pil = "".join(f'<li class="rv" style="--d:{.07*k}s"><span class="n" aria-hidden="true">{esc(p["n"])}</span><h3>{esc(p["t"])}</h3><p>{esc(p["d"])}</p></li>' for k, p in enumerate(i["principles"]))
+    return f'''<section class="intro sec" id="positioning" aria-labelledby="h-intro"><div class="wrap"><div class="sh"><p class="eyebrow rv"><span class="sn">01</span>{esc(i["eyebrow"])}</p><div class="st"><h2 class="h2 rv" id="h-intro" style="--d:.06s">{em(i["title"])}</h2><div class="txt rv" style="--d:.12s">{"".join(f"<p>{esc(p)}</p>" for p in i["paragraphs"])}</div></div></div><ul class="principles">{pil}</ul></div></section>'''
 
 def services(c):
-    s = c["services"]; lst = s["list"]
-    ch_html, det_html = "", ""
-    for ch in s["chapters"]:
-        items = [x for x in lst if x["chapter"] == ch["id"]]
-        cards = "".join(f'<li class="rv" style="--d:{.06*k}s"><article class="svc-card"><span class="no">{ch["n"]}.{k+1}</span><h4>{esc(x["name"])}</h4><p>{esc(x["short"])}</p><a class="link" href="#svc-{x["id"]}">{esc(s["viewDetails"])}{ic("arrow","arr")}</a></article></li>' for k, x in enumerate(items))
-        ch_html += f'<div class="svc-chapter"><div class="ch-head"><span class="n">{ch["n"]}</span><h3>{esc(ch["t"])}</h3><p>{esc(ch["d"])}</p></div><ul class="svc-grid">{cards}</ul></div>'
-    k = 0
-    for ch in s["chapters"]:
-        for x in [y for y in lst if y["chapter"] == ch["id"]]:
-            k += 1
+    s = c["services"]; lst = s["list"]; L = s["labels"]
+    prio = "".join(f'<li><a href="#svc-{x["id"]}"><b>{esc(x["name"])}</b><span>{esc(x["short"])}</span>{ic("arrow","arr")}</a></li>' for x in lst if x["priority"])
+    groups = ""
+    for gi, g in enumerate(s["groups"], 1):
+        rows = ""
+        for k, x in enumerate([y for y in lst if y["group"] == g["id"]], 1):
             checks = "".join(f'<li>{ic("check")}<span>{esc(t)}</span></li>' for t in x["items"])
-            det_html += f'''<article class="sd" id="svc-{x["id"]}" aria-labelledby="h-{x["id"]}"><div class="l rv"><span class="k">{esc(ch["t"])}</span><div class="num" aria-hidden="true">{k:02d}</div><h3 id="h-{x["id"]}">{esc(x["name"])}</h3></div><div class="r rv" style="--d:.1s"><p>{esc(x["intro"])}</p><div><h4>{esc(s["deliverables"])}</h4><ul class="checks">{checks}</ul></div><div class="best"><b>{esc(s["bestFor"])}</b><span>{esc(x["bestFor"])}</span></div><div><a class="btn primary sm" href="#contact" data-service="{esc(x["name"])}">{esc(s["start"])}{ic("arrow","arr")}</a></div></div></article>'''
-    return f'''<section class="sec" id="services" aria-labelledby="h-services"><div class="wrap"><div class="head"><p class="eyebrow rv">{esc(s["eyebrow"])}</p><h2 class="h2 rv" id="h-services" style="--d:.08s">{em(s["title"])}</h2><p class="lead rv" style="--d:.16s">{esc(s["lead"])}</p></div>{ch_html}</div></section>
-<section class="details" aria-label="{esc(s["eyebrow"])}"><div class="wrap">{det_html}</div></section>'''
+            badge = f'<span class="bdg">{esc(L["badge"])}</span>' if x["priority"] else ""
+            rows += f'''<article class="sv{" pr" if x["priority"] else ""}" id="svc-{x["id"]}" aria-labelledby="h-{x["id"]}"><div class="svh"><span class="no">{gi}.{k}</span><h4 id="h-{x["id"]}">{esc(x["name"])}</h4>{badge}</div>
+<div class="svb"><div class="a rv"><p class="lb">{esc(L["problem"])}</p><p class="pb">{esc(x["problem"])}</p></div><div class="b rv" style="--d:.06s"><p class="lb">{esc(L["deliverables"])}</p><ul class="checks">{checks}</ul></div>
+<div class="c rv" style="--d:.12s"><p class="lb">{esc(L["bestFor"])}</p><p>{esc(x["bestFor"])}</p><p class="lb">{esc(L["provide"])}</p><p>{esc(x["provide"])}</p><a class="btn primary sm" href="#contact" data-service="{esc(x["name"])}" aria-label="{esc(L["start"])}: {esc(x["name"])}">{esc(L["start"])}{ic("arrow","arr")}</a></div></div></article>'''
+        groups += f'<div class="grp" id="grp-{g["id"]}"><div class="gh rv"><span class="n" aria-hidden="true">{esc(g["n"])}</span><h3>{esc(g["t"])}</h3><p>{esc(g["d"])}</p></div><div class="svl">{rows}</div></div>'
+    return f'''<section class="sec" id="services" aria-labelledby="h-services"><div class="wrap">{sh(2, "h-services", s["eyebrow"], s["title"], s["lead"])}
+<div class="prio rv"><p class="lb">{esc(s["priorityLabel"])}</p><ul>{prio}</ul></div>{groups}</div></section>'''
 
-MOCKS = {
- "realestate": '<div class="body"><span class="ln l"></span><span class="ln h"></span><div class="row"><span class="tile lm"></span><span class="tile"></span><span class="tile"></span></div><span class="ln" style="width:82%"></span><span class="ln" style="width:56%"></span></div>',
- "clinic": '<div class="body"><span class="ln h" style="width:58%"></span><span class="ln" style="width:84%"></span><div class="slots"><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i></div><span class="ln l" style="width:46%;height:16px;border-radius:999px"></span></div>',
- "ecom": '<div class="body"><div class="row"><span class="tile"></span><span class="tile lm"></span><span class="tile"></span></div><div class="row"><span class="tile"></span><span class="tile"></span><span class="tile"></span></div><div class="cart"><b></b><em></em></div></div>',
-}
+def proof(c):
+    p = c["proof"]; r = p["receive"]; d = p["docs"]; m = p["method"]
+    rc = "".join(f'<li class="rv" style="--d:{.06*k}s"><span class="n" aria-hidden="true">{esc(x["n"])}</span><h4>{esc(x["t"])}</h4><p>{esc(x["d"])}</p></li>' for k, x in enumerate(r["steps"]))
+    docs = "".join(f'<li class="rv" style="--d:{.05*k}s"><article class="doc" aria-labelledby="h-doc-{x["id"]}"><div class="dt"><span class="ty">{esc(x["type"])}</span><span class="ex-chip">{esc(c["ui"]["exampleLabel"])}</span></div><h4 id="h-doc-{x["id"]}">{esc(x["title"])}</h4><ul class="dl">{"".join(f"<li>{esc(t)}</li>" for t in x["lines"])}</ul></article></li>' for k, x in enumerate(d["items"]))
+    mt = "".join(f'<li class="rv" style="--d:{.06*k}s"><span class="n" aria-hidden="true">{esc(x["n"])}</span><h4>{esc(x["t"])}</h4><p>{esc(x["d"])}</p></li>' for k, x in enumerate(m["steps"]))
+    return f'''<section class="sec proof" id="proof" aria-labelledby="h-proof"><div class="wrap">{sh(3, "h-proof", p["eyebrow"], p["title"], p["lead"])}
+<div class="pblock"><div class="pt rv"><h3>{esc(r["title"])}</h3><p>{esc(r["lead"])}</p></div><ol class="rcs">{rc}</ol></div>
+<div class="pblock"><div class="pt rv"><h3>{esc(d["title"])}</h3><p>{esc(d["lead"])}</p></div><ul class="docs">{docs}</ul></div>
+<div class="pblock"><div class="pt rv"><h3>{esc(m["title"])}</h3><p>{esc(m["lead"])}</p></div><ol class="mts">{mt}</ol></div></div></section>'''
+
+def pane(p):
+    rows = ""
+    for r in p["rows"]:
+        t, v = r["t"], r["v"]
+        if t == "kicker": rows += f'<div class="r-k">{esc(v)}</div>'
+        elif t == "h1": rows += f'<div class="r-h">{esc(v)}</div>'
+        elif t == "p": rows += f'<div class="r-p">{esc(v)}</div>'
+        elif t == "btn": rows += f'<span class="r-b">{esc(v)}</span>'
+        elif t == "facts": rows += '<div class="r-f">' + "".join(f"<span>{esc(x)}</span>" for x in v) + "</div>"
+        elif t == "list": rows += '<div class="r-l">' + "".join(f"<span>{esc(x)}</span>" for x in v) + "</div>"
+    return f'<div class="pane" lang="{p["lang"]}" dir="{p["dir"]}"><div class="pbar" aria-hidden="true"><i></i><i></i><i></i><u>{esc(p["url"])}</u></div><div class="pbody">{rows}</div></div>'
+
 def work(c):
-    w = c["work"]
+    w = c["work"]; Lb = w["labels"]
     cases = ""
     for k, x in enumerate(w["cases"]):
-        cases += f'''<li class="rv" style="--d:{.08*k}s"><article class="case"><div class="vis" aria-hidden="true"><span class="demo-chip">{esc(c["ui"]["demoLabel"])}</span><div class="mock"><div class="bar"><i></i><i></i><i></i><u></u></div>{MOCKS[x["id"]]}</div></div><div class="tx"><span class="tg">{esc(x["tag"])}</span><h3>{esc(x["title"])}</h3><p class="ctx">{esc(x["context"])}</p><div><h4>{esc(w["weDo"])}</h4><ul>{"".join(f"<li>{esc(t)}</li>" for t in x["do"])}</ul></div><div><h4>{esc(w["measure"])}</h4><ul>{"".join(f"<li>{esc(t)}</li>" for t in x["measure"])}</ul></div></div></article></li>'''
-    return f'''<section class="sec" id="work" aria-labelledby="h-work"><div class="wrap"><div class="head"><p class="eyebrow rv">{esc(w["eyebrow"])}</p><h2 class="h2 rv" id="h-work" style="--d:.08s">{em(w["title"])}</h2><p class="lead rv" style="--d:.16s">{esc(w["lead"])}</p></div><ul class="cases">{cases}</ul><p class="disc rv">{ic("info")}<span>{esc(w["disclaimer"])}</span></p></div></section>'''
+        panes = "".join(pane(p) for p in sorted(x["panes"], key=lambda q: q["lang"] != c["lang"]))  # صفحة اللغة الحالية أولاً
+        cases += f'''<li class="rv" style="--d:{.06*k}s"><article class="demo" aria-labelledby="h-demo-{x["id"]}"><div class="dh"><span class="demo-chip">{esc(c["ui"]["demoLabel"])}</span><span class="tg">{esc(x["tag"])}</span></div>
+<h3 id="h-demo-{x["id"]}">{esc(x["title"])}</h3><p class="ctx">{esc(x["context"])}</p>
+<div class="dg"><figure class="cmp"><figcaption class="lb">{esc(Lb["composition"])}</figcaption><div class="panes{" two" if len(x["panes"]) > 1 else ""}">{panes}</div></figure>
+<div class="dd"><div><h4>{esc(x["outlineTitle"])}</h4><ol class="ol">{"".join(f"<li>{esc(t)}</li>" for t in x["outline"])}</ol></div><div><h4>{esc(x["checkTitle"])}</h4><ul class="ck">{"".join(f"<li>{ic('check')}<span>{esc(t)}</span></li>" for t in x["checks"])}</ul></div></div></div>
+<div class="ms"><p class="lb">{esc(Lb["measure"])}</p><ul>{"".join(f"<li>{esc(t)}</li>" for t in x["measure"])}</ul></div></article></li>'''
+    return f'''<section class="sec" id="work" aria-labelledby="h-work"><div class="wrap">{sh(4, "h-work", w["eyebrow"], w["title"], w["lead"])}<ul class="demos">{cases}</ul><p class="disc rv">{ic("info")}<span>{esc(w["disclaimer"])}</span></p></div></section>'''
 
 def approach(c):
-    a = c["approach"]
-    steps = "".join(f'<li class="step rv" style="--d:{.08*k}s"><span class="n">{esc(x["n"])}</span><h3>{esc(x["t"])}</h3><p>{esc(x["d"])}</p><ul>{"".join(f"<li>{esc(t)}</li>" for t in x["items"])}</ul></li>' for k, x in enumerate(a["steps"]))
-    return f'''<section class="sec" id="approach" aria-labelledby="h-approach"><div class="wrap"><div class="head"><p class="eyebrow rv">{esc(a["eyebrow"])}</p><h2 class="h2 rv" id="h-approach" style="--d:.08s">{em(a["title"])}</h2><p class="lead rv" style="--d:.16s">{esc(a["lead"])}</p></div><ol class="steps">{steps}</ol></div></section>'''
-
-WHY_ICONS = ["compass", "globe", "team", "funnel", "shield", "layers"]
-def why(c):
-    w = c["why"]
-    items = "".join(f'<li class="rv" style="--d:{.06*k}s"><span class="ic">{ic(WHY_ICONS[k])}</span><h3>{esc(x["t"])}</h3><p>{esc(x["d"])}</p></li>' for k, x in enumerate(w["items"]))
-    return f'''<section class="sec" id="why" aria-labelledby="h-why"><div class="wrap"><div class="head"><p class="eyebrow rv">{esc(w["eyebrow"])}</p><h2 class="h2 rv" id="h-why" style="--d:.08s">{em(w["title"])}</h2><p class="lead rv" style="--d:.16s">{esc(w["lead"])}</p></div><ul class="why-grid">{items}</ul></div></section>'''
+    a = c["approach"]; Lb = a["labels"]
+    steps = "".join(f'<li class="step rv" style="--d:{.07*k}s"><span class="n" aria-hidden="true">{esc(x["n"])}</span><h3>{esc(x["t"])}</h3><p>{esc(x["d"])}</p><p class="lb">{esc(Lb["artifacts"])}</p><ul>{"".join(f"<li>{esc(t)}</li>" for t in x["artifacts"])}</ul><p class="appr"><b>{esc(Lb["approve"])}</b><span>{esc(x["approve"])}</span></p></li>' for k, x in enumerate(a["steps"]))
+    return f'''<section class="sec" id="approach" aria-labelledby="h-approach"><div class="wrap">{sh(5, "h-approach", a["eyebrow"], a["title"], a["lead"])}<ol class="steps">{steps}</ol></div></section>'''
 
 def industries(c):
     w = c["industries"]
     rows = "".join(f'<li class="ind rv" style="--d:{.04*k}s"><span class="nm"><i>{k+1:02d}</i>{esc(x["t"])}</span><p>{esc(x["d"])}</p>{ic("arrow","arr")}</li>' for k, x in enumerate(w["items"]))
-    return f'''<section class="sec" id="industries" aria-labelledby="h-ind"><div class="wrap"><div class="head"><p class="eyebrow rv">{esc(w["eyebrow"])}</p><h2 class="h2 rv" id="h-ind" style="--d:.08s">{em(w["title"])}</h2><p class="lead rv" style="--d:.16s">{esc(w["lead"])}</p></div><ul class="ind-list">{rows}</ul></div></section>'''
+    return f'''<section class="sec" id="industries" aria-labelledby="h-ind"><div class="wrap">{sh(6, "h-ind", w["eyebrow"], w["title"], w["lead"])}<ul class="ind-list">{rows}</ul></div></section>'''
 
 def faq(c):
     f = c["faq"]
     items = "".join(f'<details class="q"><summary><span>{esc(x["q"])}</span><span class="pl" aria-hidden="true">{ic("plus")}</span></summary><div class="a"><p>{esc(x["a"])}</p></div></details>' for x in f["items"])
-    return f'''<section class="sec" id="faq" aria-labelledby="h-faq"><div class="wrap"><div class="faq-wrap"><div class="head rv"><p class="eyebrow">{esc(f["eyebrow"])}</p><h2 class="h2" id="h-faq">{em(f["title"])}</h2></div><div class="rv" style="--d:.1s">{items}</div></div></div></section>'''
+    return f'''<section class="sec" id="faq" aria-labelledby="h-faq"><div class="wrap"><div class="faq-wrap"><div class="head rv"><p class="eyebrow"><span class="sn">07</span>{esc(f["eyebrow"])}</p><h2 class="h2" id="h-faq">{em(f["title"])}</h2></div><div class="rv" style="--d:.1s">{items}</div></div></div></section>'''
 
 def contact(c):
     t, f = c["cta"], c["form"]; F = f["fields"]
     opts = '<option value="" selected disabled>' + esc(F["service"]["placeholder"]) + '</option>' + "".join(f'<option value="{esc(s["name"])}">{esc(s["name"])}</option>' for s in c["services"]["list"]) + f'<option value="{esc(f["other"])}">{esc(f["other"])}</option>'
-    def fld(k, typ, ac, req=True, extra=""):
+    def fld(k, typ, ac, req=True, extra="", tag="input"):
         e = f["errors"]["email" if k == "email" else ("website" if k == "website" else "required")]
-        hint = f'<span class="hint" id="hint-{k}">{esc(F[k]["hint"])}</span>' if F[k].get("hint") else ""
-        dd = f"hint-{k} err-{k}" if hint else f"err-{k}"
-        return f'<div class="fld"><label for="f-{k}"><span>{esc(F[k]["label"])}</span>' + (f'<small>{esc(c["ui"]["required"])}</small>' if req else "") + f'</label><input id="f-{k}" name="{k}" type="{typ}" autocomplete="{ac}" placeholder="{esc(F[k]["placeholder"])}"' + (" required" if req else "") + f' aria-describedby="{dd}" {extra}>{hint}<span class="err" id="err-{k}" data-for="{k}">{esc(e)}</span></div>'
-    cfg = {"intro": f["msgIntro"], "labels": f["msgLabels"], "errors": f["errors"], "copied": f["success"]["copied"], "subject": f["emailSubject"], "wa": WA, "email": EMAIL, "brand": NAME}
+        mark = f'<small>{esc(c["ui"]["required"])}</small>' if req else ""
+        ctl = (f'<textarea id="f-{k}" name="{k}" rows="4" placeholder="{esc(F[k]["placeholder"])}" aria-describedby="err-{k}"' + (" required" if req else "") + '></textarea>') if tag == "textarea" else \
+              (f'<input id="f-{k}" name="{k}" type="{typ}" autocomplete="{ac}" placeholder="{esc(F[k]["placeholder"])}"' + (" required" if req else "") + f' aria-describedby="err-{k}" {extra}>')
+        return f'<div class="fld"><label for="f-{k}"><span>{esc(F[k]["label"])}</span>{mark}</label>{ctl}<span class="err" id="err-{k}" data-for="{k}">{esc(e)}</span></div>'
+    cfg = {"intro": f["msgIntro"], "labels": f["msgLabels"], "errors": f["errors"], "copied": f["ready"]["copied"], "subject": f["emailSubject"], "wa": WA, "email": EMAIL, "brand": NAME}
+    nxt = "".join(f"<li>{esc(x)}</li>" for x in t["next"]["steps"])
     return f'''<section class="cta" id="contact" aria-labelledby="h-cta"><div class="wrap"><div class="shell">
-<div class="col"><p class="eyebrow rv">{esc(t["eyebrow"])}</p><h2 class="h2 rv" id="h-cta" style="--d:.08s">{em(t["title"])}</h2><p class="lead rv" style="--d:.16s">{esc(t["text"])}</p>
-<div class="chan rv" style="--d:.24s"><a href="https://wa.me/{WA}" target="_blank" rel="noopener noreferrer">{ic("wa")}<span><b>{esc(t["whatsapp"])}</b><span>{WA_SHOW}</span></span></a><a href="mailto:{EMAIL}">{ic("mail")}<span><b>{esc(t["email"])}</b><span>{EMAIL}</span></span></a></div></div>
-<div class="col rv" style="--d:.14s"><form class="f" id="contact-form" novalidate action="mailto:{EMAIL}" method="post" enctype="text/plain"><h3>{esc(f["title"])}</h3><p class="intro-t">{esc(f["intro"])}</p>
+<div class="col"><p class="eyebrow rv">{esc(t["eyebrow"])}</p><h2 class="h2 rv" id="h-cta" style="--d:.06s">{em(t["title"])}</h2><p class="lead rv" style="--d:.12s">{esc(t["text"])}</p>
+<div class="chan rv" style="--d:.18s"><a href="https://wa.me/{WA}" target="_blank" rel="noopener noreferrer">{ic("wa")}<span><b>{esc(t["whatsapp"])}</b><span>{WA_SHOW}</span></span></a><a href="mailto:{EMAIL}">{ic("mail")}<span><b>{esc(t["email"])}</b><span>{EMAIL}</span></span></a></div>
+<div class="next rv" style="--d:.24s"><p class="lb">{esc(t["next"]["title"])}</p><ol>{nxt}</ol></div></div>
+<div class="col rv" style="--d:.14s"><form class="f" id="contact-form" novalidate action="mailto:{EMAIL}" method="post" enctype="text/plain" aria-labelledby="h-form"><p class="stage">{esc(f["stage1"])}</p><h3 id="h-form">{esc(f["title"])}</h3><p class="intro-t">{esc(f["intro"])}</p>
 <div class="summary" id="form-summary" role="alert" tabindex="-1">{esc(f["errors"]["summary"])}</div>
 <div class="row2">{fld("name","text","name")}{fld("email","email","email",extra='inputmode="email"')}</div>
-<div class="row2">{fld("company","text","organization")}{fld("website","text","url",req=False,extra='inputmode="url"')}</div>
 <div class="fld"><label for="f-service"><span>{esc(F["service"]["label"])}</span><small>{esc(c["ui"]["required"])}</small></label><select id="f-service" name="service" required aria-describedby="err-service">{opts}</select><span class="err" id="err-service" data-for="service">{esc(f["errors"]["select"])}</span></div>
-<div class="fld"><label for="f-message"><span>{esc(F["message"]["label"])}</span><small>{esc(c["ui"]["required"])}</small></label><textarea id="f-message" name="message" required rows="5" placeholder="{esc(F["message"]["placeholder"])}" aria-describedby="err-message"></textarea><span class="err" id="err-message" data-for="message">{esc(f["errors"]["required"])}</span></div>
-<button class="btn primary" type="submit">{esc(f["submit"])}{ic("arrow","arr")}</button><p class="priv">{esc(f["privacy"])}</p></form>
-<div class="ok" id="form-ok" tabindex="-1" aria-live="polite"><span class="tick">{ic("check")}</span><h3>{esc(f["success"]["title"])}</h3><p>{esc(f["success"]["text"])}</p><pre id="ok-msg"></pre>
-<div class="acts"><a class="btn primary sm" id="ok-wa" target="_blank" rel="noopener noreferrer" href="https://wa.me/{WA}">{ic("wa")}{esc(f["success"]["whatsapp"])}</a><a class="btn sm" id="ok-mail" href="mailto:{EMAIL}">{ic("mail")}{esc(f["success"]["email"])}</a><button class="btn ghost sm" type="button" id="ok-copy">{esc(f["success"]["copy"])}</button><button class="btn ghost sm" type="button" id="ok-edit">{esc(f["success"]["edit"])}</button></div><p class="live" id="ok-live" role="status"></p></div>
-<script type="application/json" id="form-cfg">{json.dumps(cfg, ensure_ascii=False)}</script></div>
+{fld("message","text","off",tag="textarea")}
+<details class="more" id="more"><summary><span>{esc(f["more"])}</span><span class="pl" aria-hidden="true">{ic("plus")}</span></summary><div class="row2">{fld("company","text","organization",req=False)}{fld("website","text","url",req=False,extra='inputmode="url"')}</div></details>
+<button class="btn primary" type="submit" aria-describedby="form-help">{esc(f["submit"])}{ic("arrow","arr")}</button><p class="help" id="form-help">{esc(f["helper"])}</p><p class="priv">{esc(f["privacy"])}</p></form>
+<div class="ok" id="form-ok" tabindex="-1" role="region" aria-labelledby="ok-h"><p class="stage">{esc(f["ready"]["stage"])}</p><h3 id="ok-h">{esc(f["ready"]["title"])}</h3><p>{esc(f["ready"]["text"])}</p><pre id="ok-msg"></pre>
+<div class="acts"><a class="btn primary sm" id="ok-wa" target="_blank" rel="noopener noreferrer" href="https://wa.me/{WA}">{ic("wa")}{esc(f["ready"]["whatsapp"])}</a><a class="btn sm" id="ok-mail" href="mailto:{EMAIL}">{ic("mail")}{esc(f["ready"]["email"])}</a><button class="btn ghost sm" type="button" id="ok-copy">{esc(f["ready"]["copy"])}</button><button class="btn ghost sm" type="button" id="ok-edit">{esc(f["ready"]["edit"])}</button></div><p class="live" id="ok-live" role="status"></p></div>
+<script type="application/json" id="form-cfg">{json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")}</script></div>
 </div></div></section>'''
 
 def footer(c, lang):
@@ -220,7 +241,7 @@ def build():
     ver = hashlib.md5((css + js).encode()).hexdigest()[:8]
     for lang in LANGS:
         c = json.load(open(HERE / "content" / f"{lang}.json", encoding="utf-8"))
-        page = head(c, lang, ver) + header(c, lang) + hero(c) + intro(c) + services(c) + work(c) + approach(c) + why(c) + industries(c) + faq(c) + contact(c) + footer(c, lang)
+        page = head(c, lang, ver) + header(c, lang) + hero(c) + intro(c) + services(c) + proof(c) + work(c) + approach(c) + industries(c) + faq(c) + contact(c) + footer(c, lang)
         page = page.replace("JSVER", ver)
         d = OUT if lang == "en" else OUT / lang
         d.mkdir(exist_ok=True); (d / "index.html").write_text(page, encoding="utf-8")
