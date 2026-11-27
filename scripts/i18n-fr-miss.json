@@ -954,5 +954,14 @@
  "لا طلبات بانتظار الاتصال": "Aucune commande en attente d'appel",
  "سيظهر الطلب الجديد هنا تلقائياً": "La nouvelle commande apparaîtra ici automatiquement",
  "فلاتر": "Filtres",
- "الكل": "Tous"
+ "الكل": "Tous",
+ "فلاتر الطلبات": "Filtres des commandes",
+ "تصفية وبحث متقدم في الطلبات": "Filtrage et recherche avancée des commandes",
+ "حالة الطلب": "Statut de la commande",
+ "السلال المتروكة": "Paniers abandonnés",
+ "المصادر": "Sources",
+ "الولايات": "Wilayas",
+ "الفترة الزمنية": "Période",
+ "خيارات إضافية": "Options supplémentaires",
+ "تطبيق الفلاتر": "Appliquer les filtres"
 }

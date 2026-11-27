@@ -82,7 +82,6 @@ html.white #ccm .ccm-it{background:#f4f7fb;border-radius:16px}
 /* ترتيب بطاقة الطلبات (حسب التصميم) */
 #tab-orders .card:has(#mo-btn)>#mo-btn{order:-6}
 #tab-orders .card:has(#mo-btn)>#cc-btn,#tab-orders .card:has(#mo-btn)>#verify-btn{grid-column:auto;order:-5;min-height:50px;border-radius:16px!important;font-weight:800;width:100%;justify-content:center;gap:.4rem}
-#tab-orders .card:has(#mo-btn)>#presend-btn{display:none!important}
 html.white body #tab-orders #cc-btn:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 6px 18px rgba(16,24,40,.07)!important}
 #tab-orders .card:has(#mo-btn)>#co-fold{order:-4;display:flex;align-items:center;justify-content:space-between;width:100%;padding:.8rem 1rem;border-radius:16px;font-weight:800;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:inherit;box-shadow:none}
 html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.08);box-shadow:0 6px 18px rgba(16,24,40,.06);color:#0f172a}
@@ -112,3 +111,44 @@ html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.
 #tab-orders #ord-chiprow #of-tg{margin-inline-start:0!important;width:auto!important}
 /* شرائح الطلبات: مستطيلة بتدوير خفيف لا بيضاوية */
 #tab-orders #ord-chiprow .opv,#tab-orders #ord-chiprow #of-tg{border-radius:14px!important;padding:.6rem .4rem!important}
+
+/* ── لوحة «فلاتر الطلبات» داخل الصفحة ── */
+#tab-orders .of-more{display:none!important}
+#tab-orders .of-more.open{display:grid!important;grid-template-columns:1fr 1fr;gap:.7rem;width:100%;margin-top:.4rem}
+#tab-orders .of-more>*{grid-column:1/-1}
+#tab-orders .of-more>.fl-sec:not(.fl-wide){grid-column:auto}
+#tab-orders .of-more .fl-head{display:flex;align-items:center;gap:.7rem}
+#tab-orders .of-more .fl-head h3{margin:0;font-size:1.25rem}
+#tab-orders .of-more .fl-head p{margin:.1rem 0 0;font-size:.8rem;opacity:.7}
+#tab-orders .of-more .fl-head .ord-ic{width:50px;height:50px}
+#tab-orders .of-more .fl-head .fl-x{margin-inline-start:auto;width:44px;height:44px;border-radius:14px;padding:0;font-size:1.4rem;line-height:1;background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.08);box-shadow:0 4px 12px rgba(16,24,40,.06);order:9}
+#tab-orders .of-more .fl-head>div{order:1}#tab-orders .of-more .fl-head .ord-ic{order:0}
+#tab-orders .of-more .fl-sec{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:.7rem .8rem;display:flex;flex-direction:column;gap:.5rem}
+html.white #tab-orders .of-more .fl-sec{background:#f6f8fc;border-color:rgba(16,24,40,.05)}
+#tab-orders .of-more .fl-l{display:flex;align-items:center;gap:.45rem;font-weight:800;font-size:.95rem}
+#tab-orders .of-more .fl-l svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tab-orders .of-more select,#tab-orders .of-more input[type=date]{width:100%;border-radius:14px;min-height:46px;background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.1)}
+#tab-orders .of-more .fl-dates{flex-direction:row;flex-wrap:wrap;align-items:center}
+#tab-orders .of-more .fl-dates .fl-l{flex:1 1 100%}
+#tab-orders .of-more .fl-dates .date-field{flex:1 1 40%;display:flex;align-items:center;gap:.4rem;margin:0}
+#tab-orders .of-more .fl-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+#tab-orders .of-more .fl-tools .fl-c{background:#f6f8fc;border-radius:18px;padding:.5rem}
+#tab-orders .of-more .fl-tools .fl-c button{width:100%;min-height:46px;font-size:.82rem;padding:.3rem .2rem}
+#tab-orders .of-more .fl-acts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+#tab-orders .of-more .fl-acts button{width:100%;min-height:50px;border-radius:14px!important;font-weight:800;font-size:.85rem}
+html.white body #tab-orders .of-more button:not(.fl-apply):not(.fl-imp):not(.fl-reset):not(.fl-x):not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 4px 12px rgba(16,24,40,.06)!important;border-radius:14px!important}
+html.white body #tab-orders .of-more .fl-reset:not(#_){background:#fee2e2!important;color:#b91c1c!important;border:1px solid #fbc5c5!important;box-shadow:none!important}
+html.white body #tab-orders .of-more .fl-imp:not(#_){background:#f3fbc9!important;color:#1f2123!important;border:1px solid #e2f08f!important;min-height:50px;border-radius:14px!important}
+#tab-orders .of-more .fl-foot{display:flex;gap:.6rem;border-top:1px solid rgba(16,24,40,.08);padding-top:.8rem}
+#tab-orders .of-more .fl-foot .fl-apply{flex:2;min-height:52px;border-radius:14px!important;background:#e2fe17!important;color:#1f2123!important;border:0!important;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:.4rem}
+#tab-orders .of-more .fl-foot .fl-apply svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+#tab-orders .of-more .fl-foot .fl-cancel{flex:1;min-height:52px;border-radius:14px!important;font-weight:800}
+#tab-orders .of-more,#tab-orders .of-more>*,#tab-orders .of-more .fl-sec{min-width:0;max-width:100%;box-sizing:border-box}
+#tab-orders .of-more .fl-head .ord-ic{display:grid;place-items:center;border-radius:16px;background:#eef9c9;flex:none;color:#0f172a}
+#tab-orders .of-more .fl-head .ord-ic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tab-orders .of-more .fl-dates .date-field{flex:1 1 42%;min-width:0;font-size:.8rem}
+#tab-orders .of-more .fl-dates .date-field input{flex:1 1 auto;min-width:0;width:100%;padding-inline:.4rem;font-size:.8rem}
+#tab-orders .of-more .fl-acts button,#tab-orders .of-more .fl-tools button{min-width:0}
+#tab-orders .search-bar>#of-more{grid-column:1/-1!important;width:100%!important}
+#tab-orders .of-more .fl-sec select,#tab-orders .of-more .fl-sec button{margin:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box}
+#tab-orders .of-more select{min-width:0!important;height:auto!important;min-height:46px;line-height:1.3;padding-block:.5rem}
