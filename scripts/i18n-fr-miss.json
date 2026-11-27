@@ -873,5 +873,10 @@
  "تعديل الرابط": "Modifier le lien",
  "محاولة فاشلة لا فشل توصيل": "tentative échouée et non un échec de livraison",
  "الرابط المعروض": "Le lien affiché",
- "رابط المنتج ويعرض هذه الصفحة؛ هذا الحقل يغيّر رابط الصفحة نفسها لا رابط المنتج": "c'est le lien du produit et il affiche cette page ; ce champ modifie le lien de la page elle-même, pas celui du produit"
+ "رابط المنتج ويعرض هذه الصفحة؛ هذا الحقل يغيّر رابط الصفحة نفسها لا رابط المنتج": "c'est le lien du produit et il affiche cette page ; ce champ modifie le lien de la page elle-même, pas celui du produit",
+ "طلب سابق أُلغي": "commande précédente annulée",
+ "طلبات سابقة أُلغيت": "commandes précédentes annulées",
+ "بعد محاولات اتصال دون رد (حتى": "après des tentatives d'appel sans réponse (jusqu'à",
+ "محاولات)": "tentatives)",
+ "قد لا يردّ على هاتفه": "il ne répond peut-être pas au téléphone"
 }
