@@ -191,20 +191,23 @@ const BoxStudio = (() => {
 @media (max-width:900px){#bs .top{padding:0 10px;gap:4px}
 #bs .top .btn.adv span,#bs .top .brand .name{display:none}
 #bs .main{flex-direction:column;padding:8px;gap:8px}
-#bs .stage{order:1;min-height:260px}
-#bs .panel{order:2;width:auto;max-height:42vh;flex:none}
+#bs .stage{order:1;min-height:50vh}
+#bs .panel{order:2;width:auto;max-height:34vh;flex:none}
 #bs .rail{order:3;width:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px}
 #bs .rail hr{display:none}
 #bs .rail .grow{display:none}
 #bs .tab{flex:none;min-width:66px;padding:6px 4px}
 #bs .tab svg{width:22px;height:22px}
 #bs .bar{bottom:8px;left:8px;right:8px;transform:none;max-width:none;justify-content:center}
-#bs .bar>div{flex-wrap:wrap;justify-content:center;row-gap:2px}
-#bs .bar .open input{width:96px}
-#bs .bar .vsep{display:none}
+#bs .bar>div{flex-wrap:nowrap;justify-content:center;gap:2px;padding:3px 6px}
+#bs .bar .ib{width:34px;height:34px;flex:none}
+#bs .bar .open{flex:1;min-width:0;gap:4px;padding:0 2px}
+#bs .bar .open span{display:none}
+#bs .bar .open input{flex:1;width:100%;min-width:56px}
+#bs .bar .vsep{display:none}      /* الجوال: شريط التحكم صف واحد مضغوط (كان صفين بأزرار 40px يغطيان 40% من الاستوديو) */
 #bs .tools{flex-direction:row;align-items:center}
 #bs .tools hr{width:0;height:24px;border:0;border-inline-start:1px solid var(--line);margin:0 4px}
-#bs .tools .ib{width:36px;height:36px}
+#bs .tools .ib{width:32px;height:32px}
 #bs .tip{display:none}
 #bs .tools{top:8px;inset-inline-end:8px}
 #bs .menu{inset-inline-start:10px}
