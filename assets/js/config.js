@@ -6,6 +6,7 @@ const CONFIG = {
     name: "ALYSSUM",
     panelName: "أليسوم",                // الاسم العربي في لوحة التحكم فقط (المتجر يبقى «ALYSSUM»)؛ اختياري
     domain: "alyssumdz.com",
+    productPrefix: "produit",           // روابط المنتجات النظيفة: alyssumdz.com/produit/<slug>/ (فارغة = في الجذر كما كان؛ يولّدها scripts/seo.py)
     waNumber: "213559237239",           // رقم واتساب بالصيغة الدولية بلا + (يمكن تغييره أيضاً من اللوحة ← الدفع)
     instagram: "alyssumdzofficiel",
     repoOwner: "saberbalbouzi-ui",      // حساب GitHub الذي يُنشر منه الموقع (تستعمله اللوحة)

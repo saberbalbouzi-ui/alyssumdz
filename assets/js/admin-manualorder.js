@@ -126,11 +126,13 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     { const bw = () => { const w = $("mo-blw"), a = A(); if (!w || !a || !a.blockHit) return; if (mode === "edit") { w.classList.add("hidden"); w.textContent = ""; return; }
         const ph = $("mo-phone").value, h = a.blockHit(ph, $("mo-name").value), t = a.custTier ? a.custTier(ph) : null, digits = String(ph || "").replace(/\D/g, "");
         const COL = { "cb-g": ["#16a34a", "rgba(34,197,94,.14)", "#15803d"], "cb-o1": ["#f59e0b", "rgba(245,158,11,.16)", "#b45309"], "cb-o2": ["#ea580c", "rgba(234,88,12,.16)", "#c2410c"], "cb-r": ["#dc2626", "rgba(220,38,38,.14)", "#b91c1c"] };
-        if (!h && (!t || digits.length < 9)) { w.classList.add("hidden"); w.textContent = ""; return; }
-        const lvl = h && h.entry.state !== "pending" ? "cb-r" : (t ? t.cls : "cb-r"), c = COL[lvl], e = h ? h.entry : null; let msg;
+        const na = (digits.length >= 9 && a.noAnsCancels) ? a.noAnsCancels(ph) : [], nm = na.reduce((m, o) => Math.max(m, a.attemptsOf(o)), 0);
+        if (!h && (!t || digits.length < 9) && !na.length) { w.classList.add("hidden"); w.textContent = ""; return; }
+        let lvl = h && h.entry.state !== "pending" ? "cb-r" : (t ? t.cls : "cb-r"); if (na.length && lvl === "cb-g") lvl = "cb-o1"; const c = COL[lvl], e = h ? h.entry : null; let msg;
         if (h) msg = (e.state === "pending" ? "⚠️ هذا " : "⛔ هذا ") + (h.by === "name" ? "الاسم" : "الهاتف") + (e.state === "pending" ? " في القائمة السوداء بانتظار المراجعة" : " محظور — في القائمة السوداء") + (e.reason ? " (" + e.reason + ")" : "") + (e.state === "pending" ? "" : ": لا يستطيع الطلب من الموقع") + (t && t.n ? " — عدد الإرجاعات: " + t.n : "");
         else if (t.n === 0) msg = "✅ زبون سليم — لا مرتجعات مسجَّلة لهذا الهاتف";
         else msg = (t.lvl >= 3 ? "🔴 " : "🟠 ") + "تنبيه: لهذا الزبون " + t.n + " " + (t.n === 1 ? "مرتجع" : t.n === 2 ? "مرتجعان" : "مرتجعات") + " سابقة — " + (t.lvl >= 3 ? "خطر مرتفع" : t.lvl === 2 ? "احذر (قريب من الحظر)" : "انتبه");
+        if (na.length) { const x = "📵 " + na.length + " " + (na.length === 1 ? "طلب سابق أُلغي" : "طلبات سابقة أُلغيت") + " بعد محاولات اتصال دون رد (حتى " + nm + " محاولات) — قد لا يردّ على هاتفه"; msg = (t && t.n === 0 && !h) ? "🟠 تنبيه: " + x : msg + " — " + x; }
         w.classList.remove("hidden"); w.textContent = msg; w.style.borderColor = c[0]; w.style.background = c[1]; w.style.color = document.documentElement.classList.contains("white") ? c[2] : ({ "cb-g": "#86efac", "cb-o1": "#fcd34d", "cb-o2": "#fdba74", "cb-r": "#fca5a5" })[lvl]; };
       ["mo-phone", "mo-name"].forEach(id => { const el = $(id); if (el) { el.addEventListener("input", bw); el.addEventListener("change", bw); } }); setTimeout(bw, 0); }
     { const fc = $("mo-free"); if (fc) { fc.onchange = () => { bg._force = true; autoFee(); }; if (fc.checked) autoFee(); } }

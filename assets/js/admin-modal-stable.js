@@ -43,10 +43,11 @@ document.addEventListener("click", e => {
 }, true);
 (() => {
   if (window.__modalStable) return; window.__modalStable = 1;
-  const SKIP = /^(au-boot)$/;
+  const SKIP = /^(au-boot|au-cover|au-bar)$/;      /* غطاء/لافتة التحديث لها توسيطها الخاص؛ والقفل يحوّل align-items إلى flex-start فيدفع محتواها إلى الجانب */
   const isOpen = el => { const cs = getComputedStyle(el); return cs.position === "fixed" && cs.display === "flex" && el.offsetWidth >= innerWidth - 2 && el.offsetHeight >= innerHeight - 2 ? cs : null; };
   function lock(el) {
     if (el.__stbl || SKIP.test(el.id || "")) return; const cs = isOpen(el); if (!cs || cs.alignItems !== "center") return;
+    if (cs.flexDirection && cs.flexDirection.indexOf("column") === 0) return;      /* حاوية عمودية: align-items فيها المحور الأفقي، وتحويله إلى flex-start يزيح المحتوى للجانب بدل تثبيت الارتفاع */
     const kid = [...el.children].find(k => k.offsetHeight > 20 && getComputedStyle(k).position !== "absolute" && getComputedStyle(k).position !== "fixed"); if (!kid) return;
     const pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0, top = Math.max(0, Math.round(kid.getBoundingClientRect().top - pt)); const st = { ai: el.style.alignItems, mt: kid.style.marginTop, ov: el.style.overflowY };
     el.__stbl = { kid, st, top }; el.style.alignItems = "flex-start"; kid.style.marginTop = top + "px";

@@ -8,6 +8,9 @@ m = re.search(r'domain:\s*"([^"]+)"', cfg)
 DOMAIN = m.group(1) if m else "example.com"
 BASE = f"https://{DOMAIN}"
 SITE = (re.search(r'name:\s*"([^"]+)"', cfg) or [0, DOMAIN])[1]
+# بادئة روابط المنتجات النظيفة (CONFIG.SITE.productPrefix): "produit" ⟵ alyssumdz.com/produit/<slug>/ ويبقى الرابط القديم /<slug>/ يحوّل إليه؛ فارغة (الافتراضي) ⟵ الجذر كما كان.
+# منتج حُوِّل مساره إلى صفحة هبوط (route) يُعامَل كصفحة: رابطه في الجذر alyssumdz.com/<slug>/ (للتفريق بين الصفحات والمنتجات)
+PFX = (re.search(r'productPrefix:\s*"([a-z0-9-]*)"', cfg) or [0, ""])[1]
 src = (ROOT / "assets/js/data.js").read_text(encoding="utf-8")
 products = json.loads(re.search(r"var PRODUCTS\s*=\s*(\[.*?\]);\s*\n", src, re.S).group(1))
 by_slug = {p["slug"]: p for p in products if p.get("slug")}
@@ -37,7 +40,7 @@ def excluded(slug, path):
 
 def url_path(slug):
     """الرابط النظيف الأساسي للمنتج (جذر الموقع)؛ يبقى /p/<slug>/ يعمل كنسخة قديمة."""
-    return f"{BASE}/{slug}/" if slug in MIRROR_SLUGS else f"{BASE}/p/{slug}/"
+    return (f"{BASE}/{PFX}/{slug}/" if (PFX and slug not in ROUTED) else f"{BASE}/{slug}/") if slug in MIRROR_SLUGS else f"{BASE}/p/{slug}/"
 
 def abs_img(value):
     value = str(value or "")
@@ -58,9 +61,11 @@ live = [p for p in products if p.get("active", True) and p["slug"] != "test" and
 # ── روابط نظيفة بلا /p و/lp: نسخة حقيقية من كل صفحة في جذر الموقع (alyssumdz.com/<slug>/) تُولَّد هنا ──
 REDIRECT_MARK, MIRROR_MARK = "<!--seo-redirect-->", "<!--seo-mirror-->"
 RESERVED = {"p", "lp", "assets", "admin", "api", "supabase", "scripts", "releases", "platform", "php-edition", "sales", "dist", "apps-script", "blog", "policy", "editor", "extension", "docs", "saas", "node_modules", "cart", "shop", "account", "index"}
+if PFX:
+    RESERVED = RESERVED | {PFX}
 SLUG_OK = re.compile(r"[a-z0-9][a-z0-9_-]*")
-def managed_dir(name):
-    d = ROOT / name; t = d / "index.html"
+def managed_dir(name, base=None):
+    d = (base or ROOT) / name; t = d / "index.html"
     if not d.exists():
         return True
     if not d.is_dir() or not t.is_file():
@@ -81,14 +86,14 @@ for page in pages if isinstance(pages, list) else []:
         live_pages[ps] = page
 ROUTED = {p["slug"]: p["route"] for p in live if p.get("route") in live_pages}          # منتج ← صفحة الهبوط المختارة مساراً له
 ROUTE_TARGETS = set(ROUTED.values())
-MIRROR_SLUGS = {p["slug"] for p in live if SLUG_OK.fullmatch(p["slug"]) and p["slug"] not in RESERVED and managed_dir(p["slug"])}
+MIRROR_SLUGS = {p["slug"] for p in live if SLUG_OK.fullmatch(p["slug"]) and p["slug"] not in RESERVED and managed_dir(p["slug"]) and (not PFX or not (ROOT / PFX).exists() or (ROOT / PFX).is_dir())}
 all_slugs = {p.get("slug") for p in products}
 PAGE_MIRRORS = {s for s in live_pages if s not in ROUTE_TARGETS and s not in all_slugs and SLUG_OK.fullmatch(s) and s not in RESERVED and managed_dir(s)}
 def page_url(slug):
     """رابط صفحة الهبوط: مساراً لمنتج ← رابط المنتج؛ وإلا جذرها النظيف أو /lp/ القديم."""
     for ps, r in ROUTED.items():
         if r == slug and ps in MIRROR_SLUGS:
-            return f"{BASE}/{ps}/"
+            return f"{BASE}/{ps}/"      # مسار منتج ⟵ جذر المنتج (كصفحة هبوط)
     return f"{BASE}/{slug}/" if slug in PAGE_MIRRORS else f"{BASE}/lp/{slug}/"
 # سكربت صغير: يجعل شريط العنوان نظيفاً إن فتح الزائر الرابط القديم (العنوان المعتمد canonical في الجذر)
 CLEAN_JS = ("<script>try{var c=document.querySelector('link[rel=canonical]');if(c&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var u=new URL(c.href);"
@@ -130,7 +135,7 @@ import subprocess, datetime
 def lastmod(u):
     """تاريخ آخر تعديل للصفحة (آخر commit يمسّ ملفها، وإلا تاريخ الملف) — لجنة الخبراء v1.89.132"""
     path = u[len(BASE):].strip("/")
-    cands = [ROOT / "index.html"] if not path else [ROOT / path / "index.html", ROOT / "p" / path / "index.html", ROOT / path]
+    cands = [ROOT / "index.html"] if not path else [ROOT / path / "index.html", ROOT / "p" / path / "index.html", ROOT / "p" / path.split("/")[-1] / "index.html", ROOT / path]
     f = next((c for c in cands if c.exists()), None)
     if not f:
         return ""
@@ -242,17 +247,31 @@ for slug in live_pages:
     n_pages += 1
 
 # نسخ جذرية حقيقية (بلا تحويل): المنتج ← صفحته أو صفحة الهبوط المختارة مساراً له؛ وصفحات الهبوط الأخرى ← جذرها
-def write_mirror(name, src_file):
-    text = src_file.read_text(encoding="utf-8").replace("../../", "../")
+def write_mirror(name, src_file, deep=False):
+    text = src_file.read_text(encoding="utf-8")
+    if not deep:
+        text = text.replace("../../", "../")      # الجذر: عمق 1؛ تحت البادئة (produit/<slug>/) العمق 2 كمصدره فلا تغيير للمسارات
     text = text.replace(MIRROR_MARK, "")
     text = re.sub(r"<head>", "<head>" + MIRROR_MARK, text, count=1) if "<head>" in text else MIRROR_MARK + text
-    d = ROOT / name
-    d.mkdir(exist_ok=True)
+    d = (ROOT / PFX / name) if deep else (ROOT / name)
+    d.mkdir(parents=True, exist_ok=True)
     (d / "index.html").write_text(text, encoding="utf-8")
+def write_redirect(old, href, abs_target, title):
+    directory = ROOT / old
+    directory.mkdir(exist_ok=True)
+    (directory / "index.html").write_text(f'<!DOCTYPE html>\n<html lang="ar" dir="rtl"><head>{REDIRECT_MARK}<meta charset="utf-8"><title>{esc(title)} — {esc(SITE)}</title>'
+                      f'<link rel="canonical" href="{esc(abs_target)}"><meta http-equiv="refresh" content="0;url={esc(href)}"><meta name="viewport" content="width=device-width,initial-scale=1">'
+                      f'<script>location.replace({json.dumps(href)}+location.search+location.hash)</script></head>'
+                      f'<body><p>انتقلت هذه الصفحة إلى <a href="{esc(href)}">{esc(title)}</a></p></body></html>\n', encoding="utf-8")
 made = 0
 for slug in sorted(MIRROR_SLUGS):
     route = ROUTED.get(slug)
-    write_mirror(slug, ROOT / "lp" / route / "index.html" if route else ROOT / "p" / slug / "index.html")
+    src_f = ROOT / "lp" / route / "index.html" if route else ROOT / "p" / slug / "index.html"
+    if PFX and not route:
+        write_mirror(slug, src_f, deep=True)
+        write_redirect(slug, f"/{PFX}/{slug}/", url_path(slug), by_slug[slug]["title"])      # الرابط القديم /<slug>/ يبقى يعمل (روابط الإعلانات المنشورة)
+    else:
+        write_mirror(slug, src_f)      # منتج بمسار صفحة هبوط (أو بلا بادئة): النسخة في الجذر
     made += 1
 for slug in sorted(PAGE_MIRRORS):
     write_mirror(slug, ROOT / "lp" / slug / "index.html")
@@ -270,7 +289,7 @@ for old, new in aliases.items():
     if directory.exists() and not (target.exists() and REDIRECT_MARK in target.read_text(encoding="utf-8")):
         continue
     directory.mkdir(exist_ok=True)
-    href = f"/{new}/" if new in MIRROR_SLUGS else f"/p/{new}/"
+    href = ((f"/{PFX}/{new}/" if (PFX and new not in ROUTED) else f"/{new}/") if new in MIRROR_SLUGS else f"/p/{new}/")
     abs_target = url_path(new)
     title = by_slug[new]["title"]
     target.write_text(f'<!DOCTYPE html>\n<html lang="ar" dir="rtl"><head>{REDIRECT_MARK}<meta charset="utf-8"><title>{esc(title)} — {esc(SITE)}</title>'
@@ -288,6 +307,11 @@ for directory in ROOT.iterdir():
         if MIRROR_MARK in txt or REDIRECT_MARK in txt:
             target.unlink()
             directory.rmdir()
+if PFX and (ROOT / PFX).is_dir():      # نسخ تحت البادئة لم يعد لها منتج (مُعطَّل/محذوف) تُحذف
+    for directory in (ROOT / PFX).iterdir():
+        target = directory / "index.html"
+        if directory.is_dir() and (directory.name not in MIRROR_SLUGS or directory.name in ROUTED) and target.exists() and MIRROR_MARK in target.read_text(encoding="utf-8"):
+            target.unlink(); directory.rmdir()
 # صفحة حساب الزبون لا تُفهرَس
 _acc = ROOT / "account.html"
 if _acc.exists():
