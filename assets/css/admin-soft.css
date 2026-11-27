@@ -121,18 +121,21 @@ html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.
 #tab-orders .of-more .fl-head h3{margin:0;font-size:1.25rem}
 #tab-orders .of-more .fl-head p{margin:.1rem 0 0;font-size:.8rem;opacity:.7}
 #tab-orders .of-more .fl-head .ord-ic{width:50px;height:50px}
-#tab-orders .of-more .fl-head .fl-x{margin-inline-start:auto;width:44px;height:44px;border-radius:14px;padding:0;font-size:1.4rem;line-height:1;background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.08);box-shadow:0 4px 12px rgba(16,24,40,.06);order:9}
+#tab-orders .of-more .fl-head .fl-x{margin-inline-start:auto;width:44px;height:44px;border-radius:14px;padding:0;font-size:1.4rem;line-height:1;background:rgba(255,255,255,.08);color:inherit;border:1px solid rgba(255,255,255,.16);box-shadow:none;order:9}
+html.white #tab-orders .of-more .fl-head .fl-x{background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.08);box-shadow:0 4px 12px rgba(16,24,40,.06)}
 #tab-orders .of-more .fl-head>div{order:1}#tab-orders .of-more .fl-head .ord-ic{order:0}
 #tab-orders .of-more .fl-sec{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:.7rem .8rem;display:flex;flex-direction:column;gap:.5rem}
 html.white #tab-orders .of-more .fl-sec{background:#f6f8fc;border-color:rgba(16,24,40,.05)}
 #tab-orders .of-more .fl-l{display:flex;align-items:center;gap:.45rem;font-weight:800;font-size:.95rem}
 #tab-orders .of-more .fl-l svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#tab-orders .of-more select,#tab-orders .of-more input[type=date]{width:100%;border-radius:14px;min-height:46px;background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.1)}
+#tab-orders .of-more select,#tab-orders .of-more input[type=date]{width:100%;border-radius:14px;min-height:46px;background:rgba(255,255,255,.08);color:inherit;border:1px solid rgba(255,255,255,.16)}
+html.white #tab-orders .of-more select,html.white #tab-orders .of-more input[type=date]{background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.1)}
 #tab-orders .of-more .fl-dates{flex-direction:row;flex-wrap:wrap;align-items:center}
 #tab-orders .of-more .fl-dates .fl-l{flex:1 1 100%}
 #tab-orders .of-more .fl-dates .date-field{flex:1 1 40%;display:flex;align-items:center;gap:.4rem;margin:0}
 #tab-orders .of-more .fl-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
-#tab-orders .of-more .fl-tools .fl-c{background:#f6f8fc;border-radius:18px;padding:.5rem}
+#tab-orders .of-more .fl-tools .fl-c{background:rgba(255,255,255,.06);border-radius:18px;padding:.5rem}
+html.white #tab-orders .of-more .fl-tools .fl-c{background:#f6f8fc}
 #tab-orders .of-more .fl-tools .fl-c button{width:100%;min-height:46px;font-size:.82rem;padding:.3rem .2rem}
 #tab-orders .of-more .fl-acts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
 #tab-orders .of-more .fl-acts button{width:100%;min-height:50px;border-radius:14px!important;font-weight:800;font-size:.85rem}
@@ -152,3 +155,10 @@ html.white body #tab-orders .of-more .fl-imp:not(#_){background:#f3fbc9!importan
 #tab-orders .search-bar>#of-more{grid-column:1/-1!important;width:100%!important}
 #tab-orders .of-more .fl-sec select,#tab-orders .of-more .fl-sec button{margin:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box}
 #tab-orders .of-more select{min-width:0!important;height:auto!important;min-height:46px;line-height:1.3;padding-block:.5rem}
+
+/* الداكن: أزرار لوحة الفلاتر زجاجية داكنة (الليموني للتطبيق فقط)، لا ليمونية كزر «أرشيف الطلبات» */
+html:not(.white) body #tab-orders .of-more button:not(.fl-apply):not(.fl-imp):not(.fl-reset):not(.fl-x):not(#_){background:rgba(255,255,255,.08)!important;color:#f1f5f9!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;text-shadow:none!important;border-radius:14px!important}
+html:not(.white) body #tab-orders .of-more .fl-reset:not(#_){background:rgba(248,113,113,.16)!important;color:#fca5a5!important;border:1px solid rgba(248,113,113,.4)!important;box-shadow:none!important}
+html:not(.white) body #tab-orders .of-more .fl-imp:not(#_){background:rgba(226,254,23,.12)!important;color:#e2fe17!important;border:1px solid rgba(226,254,23,.35)!important;box-shadow:none!important;border-radius:14px!important}
+html:not(.white) body #tab-orders .of-more .fl-foot .fl-cancel:not(#_){background:rgba(255,255,255,.08)!important}
+html:not(.white) body #tab-orders .of-more button svg{stroke:currentColor!important;color:inherit!important}
