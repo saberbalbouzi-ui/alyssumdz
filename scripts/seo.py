@@ -136,6 +136,12 @@ for slug in ("privacy", "returns", "shipping", "terms"):
         urls.append(f"{BASE}{path}")
 if (ROOT / "shop.html").exists() and not excluded("", "/shop.html"):
     urls.append(f"{BASE}/shop.html")
+# صفحات هبوط مستقلة مكتوبة يدوياً (lp/<slug>/seo-urls.txt: رابط مطلق في كل سطر، مثل lp/saber-digital-pro): تُضاف إلى الخريطة كما هي
+for f in sorted((ROOT / "lp").glob("*/seo-urls.txt")):
+    for line in f.read_text(encoding="utf-8").splitlines():
+        u = line.strip()
+        if u.startswith(BASE + "/") and u not in urls:
+            urls.append(u)
 urls = list(dict.fromkeys(urls))
 import subprocess, datetime
 def lastmod(u):
