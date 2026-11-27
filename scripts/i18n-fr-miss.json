@@ -925,5 +925,9 @@
  "اكتب اسم العلامة أولاً": "Saisissez d'abord le nom de la marque",
  "اعتمده أو غيّر النمط": "Validez-le ou changez de style",
  "جارٍ التوليد": "Génération en cours",
- "راجع الشعار ثم اعتمده": "Vérifiez le logo puis validez-le"
+ "راجع الشعار ثم اعتمده": "Vérifiez le logo puis validez-le",
+ "حفظ الصورة / تصدير فائق": "Enregistrer l'image / Export haute qualité",
+ "حفظ الصورة وتصدير فائق": "Enregistrer l'image et export haute qualité",
+ "حفظ الصورة · تصدير فائق": "Enregistrer l'image · Export haute qualité",
+ "حفظ": "Enregistrer"
 }
