@@ -3,7 +3,6 @@
   "off": [
     "voice",
     "agent",
-    "floaters",
     "ask"
   ],
   "rm": []
