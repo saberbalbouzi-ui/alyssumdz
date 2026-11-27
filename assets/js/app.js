@@ -325,7 +325,7 @@ function currentProductSlugFromUrl(){
   const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
   if(m) return m[1];
   /* الرابط النظيف: alyssumdz.com/<slug>/ */
-  const f = location.pathname.split("/").filter(Boolean)[0];
+  const sg = location.pathname.split("/").filter(Boolean), pf = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "", f = pf && sg[0] === pf ? sg[1] : sg[0];      /* alyssumdz.com/produit/<slug>/ مع بادئة المنتجات */
   return f && typeof PRODUCTS !== "undefined" && PRODUCTS.some(p=>p.slug===f) ? f : null;
 }
 function pixelApplies(px, slug){

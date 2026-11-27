@@ -30,7 +30,7 @@ const Agent = (() => {
   const currentSlug = (() => {
     const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
     if(m) return m[1];
-    const f = location.pathname.split("/").filter(Boolean)[0];       /* الرابط النظيف /<slug>/ */
+    const sg = location.pathname.split("/").filter(Boolean), pf = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "", f = pf && sg[0] === pf ? sg[1] : sg[0];       /* الرابط النظيف /<slug>/ أو /produit/<slug>/ */
     return f && (window.PRODUCTS || []).some(p => p.slug === f) ? f : null;
   })();
   const currentProduct = () => (window.PRODUCTS || []).find(p => p.slug === currentSlug) || null;
@@ -612,7 +612,7 @@ const Agent = (() => {
   }
   function hideTeaser() { const t = document.getElementById("agent-teaser"); if (t) t.remove(); }
   function showTeaser() {
-    if (engaged || document.getElementById("agent-teaser") || panel().classList.contains("open")) return;
+    if (APPS_OFF.has("agent") || engaged || document.getElementById("agent-teaser") || panel().classList.contains("open")) return;
     try { if (sessionStorage.getItem("alyssum_nudged_" + scopeKey())) return; sessionStorage.setItem("alyssum_nudged_" + scopeKey(), "1"); } catch (e) {}
     const n = nudgeCfg();
     if (avatarOn) { Avatar.tease(n.message || defaultNudgeText(currentProduct())); return; }
@@ -627,6 +627,7 @@ const Agent = (() => {
   }
   async function startNudge() {
     await ensureTraining();
+    if (APPS_OFF.has("agent")) return;      /* التطبيق معطَّل من لوحة التحكم: لا رسالة ترحيب عائمة (كانت تظهر في صفحات المنتجات رغم تعطيله) */
     const n = nudgeCfg();
     if (!n.on) return;
     const mark = () => { engaged = true; hideTeaser(); };
