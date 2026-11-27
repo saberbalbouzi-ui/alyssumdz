@@ -102,3 +102,6 @@ html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.
 #tab-orders #ord-chiprow .opv:nth-child(n+4),#tab-orders #ord-chiprow .opb{display:none!important}      /* التصميم: الكل/اليوم/آخر 7 أيام + «فلاتر»؛ بقية العروض تُنال من الحالة داخل «فلاتر» */
 #tab-orders #ord-chiprow #of-tg{width:auto!important;flex:0 0 auto!important;min-width:0!important}
 @media(max-width:600px){#tab-orders #ord-chiprow{gap:.35rem;flex-wrap:nowrap}#tab-orders #ord-chiprow .opv,#tab-orders #ord-chiprow #of-tg{padding:.45rem .7rem!important;font-size:.8rem!important;white-space:nowrap}}
+
+/* شريط الإحصاءات العلوي القديم (إجمالي/اليوم/المبيعات/منتج نشط/تصنيف): مكرر مع الرئيسية وبطاقات الطلبات فيُخفى في كل الصفحات */
+#stats{display:none!important}
