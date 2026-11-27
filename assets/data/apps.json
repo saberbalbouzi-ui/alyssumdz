@@ -2,7 +2,7 @@
   "v": 1,
   "off": [
     "floaters",
-    "voice",
-    "agent"
-  ]
+    "voice"
+  ],
+  "rm": []
 }
