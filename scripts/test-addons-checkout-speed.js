@@ -17,6 +17,8 @@ const { chromium } = require("playwright");
   t("زرّاهما القديمان لا يظهران في القائمة الجانبية (صارا في الإضافات)", r.navVisible === 0, r);
   t("«أفتح» يفتح قسم نموذج الطلب وقسم سرعة الموقع", r.c1 && r.s1, r);
   t("التعطيل يمنع الفتح من الإضافة برسالة", /معطّلة/.test(r.offToast), r.offToast);
+  const st = await p.evaluate(async () => { const j = await (await fetch("assets/data/tools-catalog.json", { cache: "no-store" })).json(); const x = j.tools.find(t => t.id === "st"); return x && x.needs; });
+  t("«استوديو المنتج» ليست مجانية (PRO)", st && st !== "free", st);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
