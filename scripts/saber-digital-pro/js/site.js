@@ -53,7 +53,7 @@
   /* scroll-spy + current section (used by the language switcher to preserve position) */
   var current = "";
   var spyLinks = $$("[data-spy]");
-  var secEls = ["services", "work", "approach", "why", "industries", "faq", "contact"].map(function (i) { return doc.getElementById(i); }).filter(Boolean);
+  var secEls = ["services", "proof", "work", "approach", "industries", "faq", "contact"].map(function (i) { return doc.getElementById(i); }).filter(Boolean);
   function spy() {
     var y = window.scrollY + window.innerHeight * 0.32, cur = "";
     secEls.forEach(function (s) { if (s.getBoundingClientRect().top + window.scrollY <= y) cur = s.id; });
@@ -86,14 +86,6 @@
     });
   });
 
-  /* pointer glow on cards */
-  $$(".svc-card").forEach(function (c) {
-    c.addEventListener("pointermove", function (e) {
-      var r = c.getBoundingClientRect();
-      c.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
-    });
-  });
-
   /* service CTA pre-selects the service in the form */
   $$("[data-service]").forEach(function (a) {
     a.addEventListener("click", function () {
@@ -108,7 +100,7 @@
   if (form && cfgEl) {
     var cfg = JSON.parse(cfgEl.textContent), ok = $("#form-ok"), sum = $("#form-summary"), pre = $("#ok-msg"), live = $("#ok-live");
     var emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, hostRx = /^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
-    var names = ["name", "email", "company", "website", "service", "message"];
+    var names = ["name", "email", "service", "message", "company", "website"], optional = { company: 1, website: 1 }, more = $("#more");
     var val = function (n) { var el = form.elements[n]; return el ? String(el.value || "").trim() : ""; };
     var normSite = function (v) {
       if (!v) return "";
@@ -118,7 +110,7 @@
     var check = function (n) {
       var v = val(n), bad;
       if (n === "email") bad = !emailRx.test(v);
-      else if (n === "website") bad = v !== "" && normSite(v) === null;
+      else if (optional[n]) bad = n === "website" && v !== "" && normSite(v) === null;
       else bad = v === "";
       var el = form.elements[n], er = $("#err-" + n);
       if (el) el.setAttribute("aria-invalid", bad ? "true" : "false");
@@ -138,7 +130,7 @@
     });
     var message = function () {
       var L = cfg.labels, lines = [cfg.intro, ""];
-      names.forEach(function (k) {
+      ["name", "email", "company", "website", "service", "message"].forEach(function (k) {
         var v = k === "website" ? (normSite(val(k)) || "") : val(k);
         if (v) lines.push(L[k] + ": " + v);
       });
@@ -148,11 +140,11 @@
       e.preventDefault();
       var bad = names.filter(function (n) { form.elements[n].dataset.touched = "1"; return !check(n); });
       sum.classList.toggle("show", bad.length > 0);
-      if (bad.length) { form.elements[bad[0]].focus(); return; }
+      if (bad.length) { if (more && optional[bad[0]]) more.open = true; form.elements[bad[0]].focus(); return; }
       var msg = message();
       pre.textContent = msg;
       $("#ok-wa").href = "https://wa.me/" + cfg.wa + "?text=" + encodeURIComponent(msg);
-      $("#ok-mail").href = "mailto:" + cfg.email + "?subject=" + encodeURIComponent(cfg.subject + " — " + val("company")) + "&body=" + encodeURIComponent(msg);
+      $("#ok-mail").href = "mailto:" + cfg.email + "?subject=" + encodeURIComponent(cfg.subject + (val("company") ? " — " + val("company") : "")) + "&body=" + encodeURIComponent(msg);
       form.style.display = "none";
       ok.classList.add("show");
       live.textContent = "";
@@ -162,6 +154,7 @@
       ok.classList.remove("show");
       form.style.display = "";
       form.elements.name.focus();
+      if (more && (val("company") || val("website"))) more.open = true;
     });
     $("#ok-copy").addEventListener("click", function () {
       var t = pre.textContent;

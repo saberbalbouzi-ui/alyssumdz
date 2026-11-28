@@ -4,10 +4,10 @@
   "locale": "en_US",
   "name": "English",
   "meta": {
-    "title": "SABER DIGITAL PRO — Digital Strategy, SEO & Web Design",
-    "description": "Premium digital studio for UAE, Saudi and international brands: SEO content, high-converting websites, e-commerce optimization and AI assistants in EN, FR and AR.",
-    "ogTitle": "SABER DIGITAL PRO — Digital strategy that earns attention and converts it",
-    "ogDescription": "SEO and content, web experiences, e-commerce optimization and AI solutions for ambitious brands in the UAE, Saudi Arabia and worldwide."
+    "title": "SABER DIGITAL PRO — SEO Content, Websites & AI Assistants",
+    "description": "Digital studio for UAE, Saudi and international businesses: SEO content, websites that convert, e-commerce optimization and AI assistants in English, French and Arabic.",
+    "ogTitle": "SABER DIGITAL PRO — Websites and content that turn searches into serious enquiries",
+    "ogDescription": "SEO content, premium websites, e-commerce optimization and AI assistants for businesses in the UAE, Saudi Arabia and worldwide, in English, French and Arabic."
   },
   "ui": {
     "skip": "Skip to content",
@@ -16,275 +16,342 @@
     "langLabel": "Language",
     "home": "SABER DIGITAL PRO — home",
     "backToTop": "Back to top",
-    "next": "Next",
-    "demoLabel": "Demonstration concept",
-    "scroll": "Scroll",
+    "demoLabel": "Demonstration concept — not a client engagement",
+    "exampleLabel": "Illustrative example",
     "required": "Required",
+    "optional": "Optional",
     "mainNav": "Main navigation",
-    "footerNav": "Footer navigation",
-    "sectionCount": "of"
+    "footerNav": "Footer navigation"
   },
   "nav": {
     "items": [
-      {
-        "id": "services",
-        "label": "Services"
-      },
-      {
-        "id": "work",
-        "label": "Work"
-      },
-      {
-        "id": "approach",
-        "label": "Approach"
-      },
-      {
-        "id": "why",
-        "label": "Why us"
-      },
-      {
-        "id": "industries",
-        "label": "Industries"
-      },
-      {
-        "id": "faq",
-        "label": "FAQ"
-      }
+      { "id": "services", "label": "Services" },
+      { "id": "proof", "label": "Deliverables" },
+      { "id": "work", "label": "Samples" },
+      { "id": "approach", "label": "Process" },
+      { "id": "industries", "label": "Sectors" },
+      { "id": "faq", "label": "FAQ" }
     ],
-    "cta": "Discuss Your Project"
+    "cta": "Discuss a project"
   },
   "hero": {
-    "eyebrow": "Digital strategy studio · UAE · KSA · Worldwide",
-    "title": "Digital strategy that *earns attention* — and converts it.",
-    "lead": "SABER DIGITAL PRO combines SEO and content, premium web design, e-commerce optimization and AI assistants into one clear plan for ambitious businesses — delivered in English, French and Arabic.",
-    "ctaPrimary": "Discuss Your Project",
-    "ctaSecondary": "Explore Our Services",
-    "tags": [
-      "Digital Strategy",
-      "SEO & Content",
-      "Web Experiences",
-      "E-commerce",
-      "Optimization",
-      "AI Solutions"
-    ],
-    "visual": {
-      "label": "Studio overview",
-      "cards": [
-        {
-          "k": "Strategy",
-          "t": "Positioning, audience and a roadmap you can act on."
-        },
-        {
-          "k": "Search",
-          "t": "Content built to rank, read and persuade."
-        },
-        {
-          "k": "Experience",
-          "t": "Fast, elegant pages designed to convert."
-        }
+    "eyebrow": "Digital studio · UAE · Saudi Arabia · International",
+    "title": "Websites and content that turn *searches* into serious enquiries.",
+    "lead": "For clinics, developers, service firms and online stores: SEO content, conversion-focused websites and honest optimization, written and designed natively in English, French and Arabic, including true right-to-left layouts.",
+    "ctaPrimary": "Discuss a project",
+    "ctaSecondary": "Inspect sample deliverables",
+    "journey": {
+      "label": "How a visitor becomes an enquiry",
+      "items": [
+        { "n": "01", "k": "Discovered", "t": "Search-led articles and service pages that match what buyers actually ask.", "g": "Content & SEO" },
+        { "n": "02", "k": "Understood", "t": "A clear page structure: what you do, for whom, and what to do next.", "g": "Website & E-commerce" },
+        { "n": "03", "k": "Trusted", "t": "Plain answers, documented proof and pages that load fast and read well.", "g": "Optimization & AI" },
+        { "n": "04", "k": "Contacted", "t": "A low-friction enquiry by WhatsApp or email, with an optional assistant for first answers.", "g": "Optimization & AI" }
+      ]
+    },
+    "specimen": {
+      "label": "One message, three native versions",
+      "items": [
+        { "lang": "en", "dir": "ltr", "text": "Start your project" },
+        { "lang": "fr", "dir": "ltr", "text": "Lancez votre projet" },
+        { "lang": "ar", "dir": "rtl", "text": "ابدأ مشروعك" }
       ],
-      "caption": "Three languages · One coherent brand"
+      "caption": "Written for each reader and laid out right-to-left where it matters, not mirrored after the fact."
+    },
+    "proof": {
+      "label": "What you can inspect on this page",
+      "text": "Service deliverables, demonstration samples, our process and a direct line to us. No client logos, quotes, ratings or invented results.",
+      "links": [
+        { "id": "proof", "label": "Deliverables" },
+        { "id": "work", "label": "Samples" },
+        { "id": "approach", "label": "Process" },
+        { "id": "contact", "label": "Direct contact" }
+      ]
     }
   },
   "intro": {
     "eyebrow": "Positioning",
-    "title": "Not a campaign factory. A strategic partner for your digital presence.",
+    "title": "A focused partner for being *found, understood and chosen*.",
     "paragraphs": [
-      "Most businesses do not have a traffic problem — they have a clarity problem. Visitors arrive and cannot tell what makes you different, what to do next, or why they should trust you with their enquiry.",
-      "We start with strategy, then give it form: content that answers real search intent, websites that feel as considered as the brand behind them, and automation that removes friction between a question and a conversation."
+      "Most businesses do not have a traffic problem. They have a clarity problem: visitors arrive and cannot tell what you do, whether they can trust you, or what to do next.",
+      "SABER DIGITAL PRO works across three connected areas, content and SEO, websites and e-commerce, optimization and AI assistants, so the message, the pages and the follow-up are planned together."
     ],
-    "pillars": [
-      {
-        "n": "01",
-        "t": "Strategy before pixels",
-        "d": "Every page, article and automation traces back to a business goal and a defined audience."
-      },
-      {
-        "n": "02",
-        "t": "Craft you can feel",
-        "d": "Editorial writing, considered typography and restrained motion — never template filler."
-      },
-      {
-        "n": "03",
-        "t": "Built for three languages",
-        "d": "English, French and Arabic are designed and written natively, including full right-to-left layouts."
-      }
+    "principles": [
+      { "n": "01", "t": "Plan before pixels", "d": "Every page, article and automation traces back to a business goal and a defined audience." },
+      { "n": "02", "t": "Substance over decoration", "d": "Editorial writing, considered typography and restrained motion, with no template filler." },
+      { "n": "03", "t": "Three languages, built natively", "d": "English, French and Arabic are written and laid out for their readers, including full right-to-left design." }
     ]
   },
   "services": {
     "eyebrow": "Services",
-    "title": "Everything your website needs to be found, trusted and chosen.",
-    "lead": "Nine focused services across content, web and optimization. Use them together as one programme or start with the one that unlocks your next step.",
-    "chapters": [
-      {
-        "id": "content",
-        "n": "01",
-        "t": "Content & SEO",
-        "d": "Words that rank, answer and persuade."
-      },
-      {
-        "id": "web",
-        "n": "02",
-        "t": "Web & E-commerce Experiences",
-        "d": "Pages and journeys designed to convert."
-      },
-      {
-        "id": "optimize",
-        "n": "03",
-        "t": "Optimization & AI",
-        "d": "Keep improving, and automate the repetitive."
-      }
+    "title": "Nine services in three connected groups.",
+    "lead": "Start with the service that unlocks your next step, or combine them into one programme. Each one states the problem it solves, what you receive and what we need from you.",
+    "priorityLabel": "Most requested",
+    "labels": {
+      "problem": "The problem",
+      "deliverables": "What you receive",
+      "bestFor": "Best fit",
+      "provide": "You provide",
+      "start": "Start with this service",
+      "badge": "Most requested"
+    },
+    "groups": [
+      { "id": "content", "n": "01", "t": "Content & SEO", "d": "Words that get found, answer questions and persuade." },
+      { "id": "web", "n": "02", "t": "Website & E-commerce", "d": "Pages and journeys designed so visitors act." },
+      { "id": "optimize", "n": "03", "t": "Optimization & AI", "d": "Find what holds the site back, then keep improving." }
     ],
-    "viewDetails": "View details",
-    "bestFor": "Best for",
-    "deliverables": "What you receive",
-    "start": "Start with this service",
     "list": [
       {
-        "id": "blog",
-        "chapter": "content",
+        "id": "blog", "group": "content", "priority": true,
         "name": "SEO Blog Writing & Content Strategy",
-        "short": "Topic strategy and expert-quality articles that earn visibility and trust.",
-        "intro": "A blog only works when every article has a purpose. We map your audience's real questions to a topic architecture, then write long-form, well-researched articles that rank for intent — and guide readers towards an enquiry.",
+        "short": "Topic strategy and well-researched articles that earn visibility and trust.",
+        "problem": "Your blog publishes but does not attract the buyers you want, because articles are not tied to real search intent or to an enquiry.",
         "items": [
-          "Keyword and search-intent research by topic cluster",
+          "Search-intent research grouped by topic cluster",
           "Editorial strategy and content pillars",
-          "Long-form articles written to brief, in your voice",
+          "Long-form articles written to an agreed brief, in your voice",
           "On-page SEO: structure, internal links, meta and schema suggestions"
         ],
-        "bestFor": "Brands that want a lasting organic channel instead of paying for every visit."
+        "bestFor": "Brands that want a lasting organic channel rather than paying for every visit.",
+        "provide": "A short interview or briefing, plus subject-matter review where accuracy matters."
       },
       {
-        "id": "refresh",
-        "chapter": "content",
+        "id": "refresh", "group": "content", "priority": true,
         "name": "Existing Article Refresh & Optimization",
-        "short": "Revive ageing content so it ranks again and reads like it was written today.",
-        "intro": "Older articles often hold the fastest wins. We audit what you have, decide what to update, merge or retire, and rewrite the pieces with the most potential so they match current intent and your current offer.",
+        "short": "Revive ageing articles so they rank again and match today's offer.",
+        "problem": "Older articles have lost rankings or contain outdated facts, yet they often hold the fastest wins.",
         "items": [
           "Content audit with a keep / update / merge / remove plan",
-          "Rewrites that fix intent gaps and outdated information",
-          "Improved headings, internal linking and snippet-ready answers",
+          "Rewrites that close intent gaps and correct outdated information",
+          "Improved headings, internal links and snippet-ready answers",
           "Refreshed calls to action aligned with your services"
         ],
-        "bestFor": "Websites with a library of articles that has stopped performing."
+        "bestFor": "Websites with a library of articles that has stopped performing.",
+        "provide": "Read access to your analytics and content, and a current list of services and facts."
       },
       {
-        "id": "landing",
-        "chapter": "content",
+        "id": "landing", "group": "content", "priority": true,
         "name": "SEO Landing Pages & Service-Page Copywriting",
         "short": "Persuasive service pages that rank for commercial intent and move visitors to act.",
-        "intro": "Service and landing pages are where search traffic becomes revenue. We write them around one search intent, one audience and one clear action — with proof points, objection handling and structure that search engines understand.",
+        "problem": "Service pages describe what you do but do not answer buyer questions or ask for the enquiry.",
         "items": [
           "Page-by-page keyword and messaging plan",
-          "Persuasive copy with a clear value proposition",
-          "FAQ blocks and trust sections written for conversion",
+          "Copy with a clear value proposition and objection handling",
+          "FAQ and trust sections written from your real information",
           "Metadata and structured-data suggestions for each page"
         ],
-        "bestFor": "Service businesses and clinics that need pages their ideal client actually responds to."
+        "bestFor": "Service businesses and clinics that need pages their ideal client responds to.",
+        "provide": "Service details, credentials you can document, and approval of every claim."
       },
       {
-        "id": "product",
-        "chapter": "content",
+        "id": "product", "group": "content", "priority": false,
         "name": "Product & Category Descriptions",
         "short": "Descriptions that sell the benefit, not just the specification.",
-        "intro": "Good product and category copy helps customers decide and gives search engines unique, useful content. We write consistent, brand-aligned descriptions at catalogue scale without sounding repetitive.",
+        "problem": "Catalogue copy is thin, copied from suppliers or repeated across products, so it neither persuades nor ranks.",
         "items": [
-          "Tone-of-voice and templates for every product type",
-          "Benefit-led product copy with accurate specifications",
+          "Tone of voice and templates per product type",
+          "Benefit-led descriptions with accurate specifications",
           "Category introductions that support SEO and navigation",
           "Bulk delivery in the format your store platform needs"
         ],
-        "bestFor": "E-commerce brands with growing catalogues and thin or duplicated copy."
+        "bestFor": "E-commerce brands with growing catalogues and thin or duplicated copy.",
+        "provide": "A product data sheet or spreadsheet, and approval of specifications."
       },
       {
-        "id": "guides",
-        "chapter": "content",
+        "id": "guides", "group": "content", "priority": false,
         "name": "Buyer Guides, FAQs & Editorial Calendars",
         "short": "Decision-stage content and a calendar that keeps publishing on track.",
-        "intro": "Buyers research before they enquire. Comparison pages, buying guides and well-structured FAQs answer doubts at the exact moment they appear — and an editorial calendar keeps the whole programme consistent.",
+        "problem": "Buyers research and compare before they enquire, and nothing on your site answers those doubts.",
         "items": [
           "Buyer guides and comparison content for decision-stage searches",
-          "FAQ libraries structured for search and assistants",
-          "A rolling editorial calendar linked to business priorities",
-          "Briefs your team or ours can follow"
+          "FAQ libraries structured for search and for assistants",
+          "A rolling editorial calendar tied to business priorities",
+          "Briefs that your team or ours can follow"
         ],
-        "bestFor": "Considered purchases where trust and clarity decide the sale."
+        "bestFor": "Considered purchases where trust and clarity decide the sale.",
+        "provide": "Access to the people who answer customers' questions today."
       },
       {
-        "id": "website",
-        "chapter": "web",
+        "id": "website", "group": "web", "priority": false,
         "name": "Website Design & Landing Page Development",
-        "short": "Premium, fast, accessible websites and campaign pages — multilingual by design.",
-        "intro": "We design and build websites that look like the brand you want to be taken seriously as. Clean semantic code, fast loading, accessible interaction and native right-to-left support for Arabic come as standard.",
+        "short": "Fast, accessible, multilingual websites and campaign pages.",
+        "problem": "The site looks dated or generic, loads slowly, or sends visitors in circles instead of to an enquiry.",
         "items": [
           "Information architecture and conversion-focused page design",
-          "Responsive development with performance and accessibility built in",
-          "English, French and Arabic versions with proper RTL layouts",
+          "Responsive build with performance and accessibility included",
+          "English, French and Arabic versions with genuine RTL layouts",
           "SEO-ready structure, metadata and analytics setup"
         ],
-        "bestFor": "Businesses relaunching their site or launching a focused campaign page."
+        "bestFor": "Businesses relaunching a site or launching one focused campaign page.",
+        "provide": "Brand assets, hosting access and a named approver for each review."
       },
       {
-        "id": "ecommerce",
-        "chapter": "web",
+        "id": "ecommerce", "group": "web", "priority": false,
         "name": "E-commerce Experience Optimization",
         "short": "Smoother product, cart and checkout journeys that reduce friction.",
-        "intro": "Small points of friction quietly cost sales. We review the shopping journey end to end and improve what customers see, understand and do — from category pages and product detail to cart and checkout messaging.",
+        "problem": "The store gets visits, but customers hesitate at product pages, delivery information or checkout.",
         "items": [
-          "Journey review with prioritized recommendations",
-          "Product page and category page structure and copy improvements",
+          "Shopping-journey review with prioritized recommendations",
+          "Product-page and category-page structure and copy improvements",
           "Cart and checkout clarity: delivery, payment and trust messaging",
-          "Test ideas and measurement plan for ongoing improvement"
+          "Test ideas and a measurement plan for ongoing improvement"
         ],
-        "bestFor": "Online stores with traffic that is not turning into orders."
+        "bestFor": "Online stores with traffic that is not turning into orders.",
+        "provide": "Analytics access and a view of the store's cart and checkout."
       },
       {
-        "id": "audit",
-        "chapter": "optimize",
+        "id": "audit", "group": "optimize", "priority": true,
         "name": "Website Audits & Technical / Front-end Improvements",
-        "short": "A clear diagnosis of what holds your site back — and the fixes to prioritize.",
-        "intro": "An audit turns opinions into a plan. We examine technical SEO, performance, accessibility, content and conversion paths, then hand you a prioritized list of improvements — and can implement the front-end fixes ourselves.",
+        "short": "A prioritized diagnosis of what holds your site back, and the front-end fixes.",
+        "problem": "You suspect the site underperforms but cannot tell whether the cause is technical, content or conversion.",
         "items": [
           "Technical SEO, speed and accessibility review",
           "Content and conversion-path review",
-          "Prioritized roadmap ranked by impact and effort",
+          "Priority list ranked by impact and effort",
           "Front-end fixes implemented on request"
         ],
-        "bestFor": "Teams who suspect the site is underperforming but are not sure where to start."
+        "bestFor": "Teams who need a clear starting point before investing further.",
+        "provide": "Site access or a staging link, and analytics access where available."
       },
       {
-        "id": "ai",
-        "chapter": "optimize",
-        "name": "AI-powered Website Assistants & Automation",
-        "short": "Assistants that answer visitors, qualify enquiries and hand over to your team.",
-        "intro": "An assistant on your website can answer common questions around the clock, collect the right details and route serious enquiries to you on WhatsApp or email. We design the conversation, set the boundaries and connect it to your workflow.",
+        "id": "ai", "group": "optimize", "priority": false,
+        "name": "AI Website Assistants & Workflow Automation",
+        "short": "Assistants that answer common questions and pass serious enquiries to your team.",
+        "problem": "The same questions arrive again and again, and slow first replies lose interested visitors.",
         "items": [
           "Conversation design in English, French and Arabic",
-          "Knowledge base drawn from your real content and FAQs",
+          "Knowledge base drawn only from content you approve",
           "Lead qualification and hand-off to WhatsApp or email",
-          "Clear limits: the assistant only answers what you approve"
+          "Clear limits: the assistant answers only what you have approved"
         ],
-        "bestFor": "Businesses that receive repetitive enquiries and want faster first responses."
+        "bestFor": "Businesses with repetitive enquiries that want faster first responses.",
+        "provide": "Approved answers, escalation rules and a named owner for the assistant's content."
       }
     ]
   },
+  "proof": {
+    "eyebrow": "Proof you can inspect",
+    "title": "Working standards, not borrowed credibility.",
+    "lead": "We do not show client logos, quotes or results we cannot document. Instead, this is what a project produces, how work is checked and what you approve.",
+    "receive": {
+      "title": "What you receive",
+      "lead": "Every engagement is scoped in writing before work starts.",
+      "steps": [
+        { "n": "01", "t": "Scope", "d": "The goal, audience, languages, pages or articles included, and what is out of scope." },
+        { "n": "02", "t": "Deliverables", "d": "Named outputs in agreed formats: documents, copy, designs or code." },
+        { "n": "03", "t": "Review points", "d": "Stages where you review and approve, with a clear owner on each side." },
+        { "n": "04", "t": "Handover", "d": "Final files, a short guide and notes your team can keep using." }
+      ]
+    },
+    "docs": {
+      "title": "Example deliverables",
+      "lead": "Short extracts of the documents a project produces. Each is an illustrative example written for this page, not taken from client work.",
+      "items": [
+        { "id": "brief", "type": "Project brief", "title": "One page everyone signs off", "lines": [
+          "Goal: more qualified enquiries for [service]",
+          "Audience: [role], [market], [language]",
+          "In scope: 6 service pages, English and Arabic",
+          "Out of scope: paid advertising, photography",
+          "Approver: [name] at each review point"
+        ] },
+        { "id": "outline", "type": "Page outline", "title": "Service page structure", "lines": [
+          "H1: the service, and who it is for",
+          "Who it is for, and who it is not for",
+          "What happens, step by step",
+          "Proof you can document",
+          "FAQ: five real customer questions",
+          "One clear next step"
+        ] },
+        { "id": "article", "type": "SEO article structure", "title": "Article skeleton", "lines": [
+          "Search intent: comparing options before buying",
+          "H1 and a 40-word direct answer",
+          "H2 sections mapped to related questions",
+          "Comparison table, then a decision guide",
+          "Internal links: two service pages, one guide",
+          "Meta title, description and schema notes"
+        ] },
+        { "id": "wire", "type": "Landing-page wireframe", "title": "Section order", "lines": [
+          "1  Hero: one promise, one action",
+          "2  The problem, in the buyer's words",
+          "3  The offer and what is included",
+          "4  Proof, only if documented",
+          "5  Questions and objections",
+          "6  Enquiry form and WhatsApp"
+        ] },
+        { "id": "refresh", "type": "Content refresh checklist", "title": "Before an article goes live again", "lines": [
+          "Does the page still match the search intent?",
+          "Facts, prices and dates verified",
+          "Title and H2s reflect real queries",
+          "Overlapping articles merged or retired",
+          "Links point to current services",
+          "Call to action matches today's offer"
+        ] },
+        { "id": "audit", "type": "Audit priority list", "title": "Ranked by impact and effort", "lines": [
+          "High impact, low effort: fix missing page titles",
+          "High impact, medium effort: compress hero images",
+          "Medium impact, low effort: add FAQ markup",
+          "Medium impact, medium effort: rewrite thin category pages",
+          "Low impact, low effort: tidy heading order"
+        ] }
+      ]
+    },
+    "method": {
+      "title": "How content is researched and approved",
+      "lead": "Content that touches health, finance, law or technical facts is never published on our word alone.",
+      "steps": [
+        { "n": "01", "t": "Research", "d": "We read your material, interview your team and review the sources your market relies on, and we keep a source list." },
+        { "n": "02", "t": "Fact-check", "d": "Claims, figures and names are checked against those sources. Anything we cannot verify is removed or flagged for you." },
+        { "n": "03", "t": "Approval", "d": "Your subject-matter expert reviews the draft where accuracy matters, and nothing is published without your approval." }
+      ]
+    }
+  },
   "work": {
-    "eyebrow": "Selected work",
-    "title": "How we would approach your sector.",
-    "lead": "We are building our public portfolio. Until real case studies can be shared, these are clearly labelled demonstration concepts that show how we think, plan and design.",
-    "disclaimer": "Demonstration concepts for illustration only. They are not client projects and contain no real results.",
-    "weDo": "What we would build",
-    "measure": "What we would measure",
+    "eyebrow": "Demonstration samples",
+    "title": "Three illustrative concepts, built to be inspected.",
+    "lead": "These are concept samples we authored for this page. They are not client work and show no real results; they show how we structure pages and content.",
+    "disclaimer": "Demonstration concepts for illustration only. They are not client projects, and no real clients, results or medical claims are shown. Bracketed text is a placeholder.",
+    "labels": {
+      "composition": "Page composition",
+      "outline": "Content outline",
+      "checklist": "Checklist",
+      "measure": "What we would measure"
+    },
     "cases": [
       {
         "id": "realestate",
         "tag": "Real estate",
-        "title": "Bilingual project pages and a market-insight content hub",
-        "context": "A developer needs qualified buyer enquiries for new launches across several emirates.",
-        "do": [
-          "One landing-page system per project with consistent structure",
-          "An insight hub answering location, financing and ownership questions",
-          "English and Arabic versions with native RTL design"
+        "title": "Bilingual project landing page and market-insight outline",
+        "context": "A developer needs qualified buyer enquiries for a new launch, in English and Arabic.",
+        "outlineTitle": "Market-insight content outline",
+        "checkTitle": "Quality checklist",
+        "panes": [
+          { "lang": "en", "dir": "ltr", "url": "project.example/en", "rows": [
+            { "t": "kicker", "v": "Waterfront residences" },
+            { "t": "h1", "v": "Live where the city meets the sea" },
+            { "t": "p", "v": "Studios to three-bedroom homes. Request the floor plans and payment plan." },
+            { "t": "facts", "v": ["Handover · [date]", "Homes · [range]", "Area · [district]"] },
+            { "t": "btn", "v": "Request floor plans" }
+          ] },
+          { "lang": "ar", "dir": "rtl", "url": "project.example/ar", "rows": [
+            { "t": "kicker", "v": "إقامات على الواجهة البحرية" },
+            { "t": "h1", "v": "عشْ حيث تلتقي المدينة بالبحر" },
+            { "t": "p", "v": "من الاستوديو إلى ثلاث غرف نوم. اطلب المخططات وخطة الدفع." },
+            { "t": "facts", "v": ["التسليم · [التاريخ]", "الوحدات · [النطاق]", "المنطقة · [الحي]"] },
+            { "t": "btn", "v": "اطلب المخططات" }
+          ] }
+        ],
+        "outline": [
+          "Buying in [city]: ownership rules for international buyers",
+          "Payment plans explained, step by step",
+          "Neighbourhood guide: distances and amenities",
+          "Project FAQ: handover, fees and service charges",
+          "Enquiry page with a WhatsApp option"
+        ],
+        "checks": [
+          "Same structure in English and Arabic, each laid out natively",
+          "Every figure sourced, or clearly marked as a placeholder",
+          "Requesting floor plans is the single primary action",
+          "Arabic page reviewed by a native reader"
         ],
         "measure": [
           "Qualified enquiries per project page",
@@ -295,12 +362,31 @@
       {
         "id": "clinic",
         "tag": "Healthcare & clinics",
-        "title": "Service pages and a patient-first booking journey",
-        "context": "A multi-specialty clinic wants patients to understand treatments and book with confidence.",
-        "do": [
-          "Clear service pages written in plain, reassuring language",
-          "FAQ library and treatment guides reviewed by the clinic",
-          "A simple booking path with a WhatsApp option"
+        "title": "Service-page hierarchy and patient FAQ structure",
+        "context": "A multi-specialty clinic wants patients to understand a service and ask with confidence.",
+        "outlineTitle": "Patient FAQ structure",
+        "checkTitle": "Safety checklist",
+        "panes": [
+          { "lang": "en", "dir": "ltr", "url": "clinic.example/services/[service]", "rows": [
+            { "t": "kicker", "v": "[Specialty]" },
+            { "t": "h1", "v": "[Service name]: what to expect" },
+            { "t": "p", "v": "A plain-language overview written with the clinic and approved by its doctors." },
+            { "t": "list", "v": ["Who it is for", "How a visit works", "Preparing for your appointment", "Questions to ask your doctor"] },
+            { "t": "btn", "v": "Request an appointment" }
+          ] }
+        ],
+        "outline": [
+          "Is this service right for me? Start with a consultation",
+          "How should I prepare?",
+          "What happens during the visit?",
+          "Costs and insurance: who to ask",
+          "How do I contact the clinic?"
+        ],
+        "checks": [
+          "Clinical statements supplied or approved by the clinic's doctors",
+          "No promises of outcomes or cures",
+          "Emergency guidance and contact details are easy to find",
+          "Plain, reassuring language at an accessible reading level"
         ],
         "measure": [
           "Booking requests per service page",
@@ -311,12 +397,32 @@
       {
         "id": "ecom",
         "tag": "E-commerce",
-        "title": "Category copy and a lower-friction checkout story",
-        "context": "A fast-growing online store has strong traffic but thin category copy and drop-offs at checkout.",
-        "do": [
-          "Category introductions and product descriptions at catalogue scale",
-          "Buying guides that answer pre-purchase questions",
-          "Clearer delivery, payment and returns messaging in the cart"
+        "title": "Category and product copy, plus a checkout clarity checklist",
+        "context": "An online store has solid traffic but thin category copy and hesitation at checkout.",
+        "outlineTitle": "Category and product copy treatment",
+        "checkTitle": "Checkout clarity checklist",
+        "panes": [
+          { "lang": "en", "dir": "ltr", "url": "store.example/category/[name]", "rows": [
+            { "t": "kicker", "v": "Category · [name]" },
+            { "t": "h1", "v": "[Category name]" },
+            { "t": "p", "v": "Two lines on who it suits, how to choose and what to compare." },
+            { "t": "facts", "v": ["Delivery · [cost, areas]", "Returns · [policy]", "Payment · [methods]"] },
+            { "t": "btn", "v": "View products" }
+          ] }
+        ],
+        "outline": [
+          "Category intro: who it is for and how to choose",
+          "Product title pattern: benefit, type, key specification",
+          "Short description: three benefit lines",
+          "Specifications table, accurate and consistent",
+          "Delivery and returns line beside the add-to-cart button"
+        ],
+        "checks": [
+          "Total cost, including delivery, visible before checkout",
+          "Delivery areas and timing stated honestly",
+          "Payment methods shown before the form",
+          "Returns policy linked from the cart",
+          "Guest checkout and clear error messages"
         ],
         "measure": [
           "Category-page organic visibility",
@@ -327,213 +433,94 @@
     ]
   },
   "approach": {
-    "eyebrow": "Our approach",
-    "title": "A clear process from first conversation to measurable improvement.",
-    "lead": "Four stages, each with a defined output, so you always know where the project stands.",
+    "eyebrow": "Process",
+    "title": "Four stages, each with an artifact and an approval.",
+    "lead": "You always know what is being produced and when your sign-off is needed. We do not promise delivery times in advance; timings are agreed in the written scope.",
+    "labels": { "artifacts": "Artifacts", "approve": "You approve" },
     "steps": [
-      {
-        "n": "01",
-        "t": "Discover",
-        "d": "We learn your business, audience, competitors and constraints before proposing anything.",
-        "items": [
-          "Goals and success measures",
-          "Audience and market review",
-          "Current site and content audit"
-        ]
-      },
-      {
-        "n": "02",
-        "t": "Strategize",
-        "d": "We turn what we learn into a focused plan: positioning, structure, topics and priorities.",
-        "items": [
-          "Positioning and messaging",
-          "Content and site architecture",
-          "Roadmap with clear priorities"
-        ]
-      },
-      {
-        "n": "03",
-        "t": "Execute",
-        "d": "We write, design and build in short, reviewable stages with your feedback built in.",
-        "items": [
-          "Copy, design and development",
-          "Review rounds with clear owners",
-          "Launch checklist and handover"
-        ]
-      },
-      {
-        "n": "04",
-        "t": "Optimize",
-        "d": "We measure what happens next, learn from it and keep improving what matters most.",
-        "items": [
-          "Measurement and reporting plan",
-          "Content and conversion refinements",
-          "Next-quarter priorities"
-        ]
-      }
-    ]
-  },
-  "why": {
-    "eyebrow": "Why work with us",
-    "title": "Premium thinking, practical delivery.",
-    "lead": "What you can expect when SABER DIGITAL PRO is your digital partner.",
-    "items": [
-      {
-        "t": "Strategy-led, not template-led",
-        "d": "We begin with your goals and audience, so design and copy have a reason to exist."
-      },
-      {
-        "t": "Native English, French and Arabic",
-        "d": "Content is written for each language and market — not translated word for word."
-      },
-      {
-        "t": "One team across content and web",
-        "d": "Writers, designers and developers work from the same plan, so the message and the experience match."
-      },
-      {
-        "t": "Search and conversion together",
-        "d": "We optimize for being found and for what visitors do next, because traffic alone is not a result."
-      },
-      {
-        "t": "Clear scope and honest communication",
-        "d": "Defined deliverables, plain-language updates and no promises we cannot responsibly make."
-      },
-      {
-        "t": "Built to last",
-        "d": "Clean, accessible, fast code and documented content systems your team can keep using."
-      }
+      { "n": "01", "t": "Discover", "d": "We learn your business, audience, competitors and constraints before proposing anything.", "artifacts": ["Goals and success measures", "Audience and market notes", "Current site and content review"], "approve": "The written scope and goals." },
+      { "n": "02", "t": "Plan", "d": "We turn findings into a focused plan: positioning, structure, topics and priorities.", "artifacts": ["Messaging and positioning notes", "Page or content architecture", "Prioritized roadmap"], "approve": "The plan and the order of work." },
+      { "n": "03", "t": "Produce", "d": "We write, design and build in reviewable stages, with your feedback built in.", "artifacts": ["Copy, designs or code, in stages", "Source list for factual content", "Launch checklist"], "approve": "Each stage before the next begins." },
+      { "n": "04", "t": "Review & Improve", "d": "We check what happened after launch, learn from it and keep improving what matters.", "artifacts": ["Measurement and reporting plan", "Content and conversion refinements", "Next priorities"], "approve": "What to improve next, if you continue." }
     ]
   },
   "industries": {
-    "eyebrow": "Industries served",
-    "title": "Experience across the sectors that depend on trust.",
-    "lead": "Our work is shaped for businesses where reputation, clarity and quality of enquiry matter most.",
+    "eyebrow": "Sectors",
+    "title": "Sectors we build for.",
+    "lead": "Our work suits businesses where reputation, clarity and the quality of an enquiry matter most.",
     "items": [
-      {
-        "t": "Real estate",
-        "d": "Project launches, developer brands, agencies and property portals."
-      },
-      {
-        "t": "Healthcare & clinics",
-        "d": "Clinics, specialists and wellness providers building patient trust."
-      },
-      {
-        "t": "Hospitality",
-        "d": "Hotels, restaurants, venues and experiences that sell on atmosphere."
-      },
-      {
-        "t": "E-commerce brands",
-        "d": "Online stores growing catalogues, categories and conversion."
-      },
-      {
-        "t": "Professional services",
-        "d": "Consultancies, legal, finance and advisory firms that win on credibility."
-      },
-      {
-        "t": "Regional & global brands",
-        "d": "Companies entering or expanding in the UAE and Saudi markets."
-      },
-      {
-        "t": "International businesses",
-        "d": "Teams needing coherent English, French and Arabic digital presence."
-      }
+      { "t": "Real estate", "d": "Project launches, developer brands, agencies and property portals." },
+      { "t": "Healthcare & clinics", "d": "Clinics, specialists and wellness providers building patient trust." },
+      { "t": "Hospitality", "d": "Hotels, restaurants, venues and experiences that sell on atmosphere." },
+      { "t": "E-commerce brands", "d": "Online stores growing catalogues, categories and conversion." },
+      { "t": "Professional services", "d": "Consultancies, legal, finance and advisory firms that win on credibility." },
+      { "t": "Regional & global brands", "d": "Companies entering or expanding in the UAE and Saudi markets." },
+      { "t": "International businesses", "d": "Teams needing a coherent English, French and Arabic digital presence." }
     ]
   },
   "faq": {
     "eyebrow": "FAQ",
     "title": "Questions we are asked most.",
     "items": [
-      {
-        "q": "What does SABER DIGITAL PRO do?",
-        "a": "We are a digital studio covering strategy, SEO content, website design and development, e-commerce optimization and AI-powered website assistants. We usually combine several of these into one programme."
-      },
-      {
-        "q": "Which languages do you work in?",
-        "a": "English, French and Arabic. Each version is written and designed natively, including full right-to-left layouts for Arabic, rather than being a literal translation."
-      },
-      {
-        "q": "Do you work with existing websites?",
-        "a": "Yes. We can audit, refresh and extend what you already have, or rebuild from scratch when that is the better choice. We will tell you honestly which makes sense."
-      },
-      {
-        "q": "How do you price projects?",
-        "a": "Each project is scoped individually from your goals, languages and volume of work. After a first conversation we send a clear proposal with deliverables and timing."
-      },
-      {
-        "q": "How long does SEO take to show results?",
-        "a": "It depends on competition, your current site and how consistently content is published. Organic growth builds over months, not days, and we do not promise rankings. We plan for steady, measurable improvement."
-      },
-      {
-        "q": "Can an AI assistant really help my business?",
-        "a": "For repetitive questions and first-response handling, yes. We define what the assistant may answer, base it on your approved content, and hand serious enquiries to your team via WhatsApp or email."
-      },
-      {
-        "q": "Will you write the content or do I need to supply it?",
-        "a": "We can do either. We commonly interview your team, research your market and write the content ourselves, then review it with you before publishing."
-      },
-      {
-        "q": "How do we get started?",
-        "a": "Send us a short description of your business and goals through the form or on WhatsApp. We will reply to discuss scope and suggest the best first step."
-      }
+      { "q": "Are the samples on this page real client projects?", "a": "No. They are demonstration concepts authored for this page and are labelled as such. We do not show client logos, quotes or results that we cannot document." },
+      { "q": "Which languages do you work in?", "a": "English, French and Arabic. Each version is written and designed natively, including full right-to-left layouts for Arabic, rather than being a literal translation." },
+      { "q": "Do you work with existing websites?", "a": "Yes. We can audit, refresh and extend what you already have, or rebuild from scratch when that is the better choice. We will tell you honestly which makes sense." },
+      { "q": "How do you price projects?", "a": "Each project is scoped individually from your goals, languages and volume of work. After a first conversation we send a written proposal with deliverables and the points where you review and approve." },
+      { "q": "How long does SEO take to show results?", "a": "It depends on competition, your current site and how consistently content is published. Organic growth builds over months, not days, and we do not promise rankings. We plan for steady, measurable improvement." },
+      { "q": "Can an AI assistant really help my business?", "a": "For repetitive questions and first-response handling, yes. We define what the assistant may answer, base it on your approved content, and hand serious enquiries to your team via WhatsApp or email." },
+      { "q": "Will you write the content or do I need to supply it?", "a": "We can do either. We commonly interview your team, research your market and write the content ourselves, then review it with you before publishing." },
+      { "q": "What happens when I press “Prepare my request”?", "a": "The page builds a message from your details on your own device. Nothing is sent. You then choose WhatsApp or email and press send yourself, or you copy the message." }
     ]
   },
   "cta": {
     "eyebrow": "Start a project",
-    "title": "Ready to give your digital presence a clear direction?",
-    "text": "Tell us about your business and what you want to achieve. We will reply with honest thoughts on scope and the best first step.",
-    "primary": "Discuss Your Project",
+    "title": "Tell us what you want your website to *achieve*.",
+    "text": "A few details are enough. We reply with honest thoughts on scope and a suggested first step.",
     "whatsapp": "Chat on WhatsApp",
-    "email": "Email us"
+    "email": "Email us",
+    "next": {
+      "title": "What happens next",
+      "steps": [
+        "You prepare a message here. Nothing leaves your device.",
+        "You send it yourself by WhatsApp or email, or copy it.",
+        "We reply personally with questions about scope and a suggested first step."
+      ]
+    }
   },
   "form": {
-    "title": "Discuss your project",
-    "intro": "A few details help us respond with something useful. Fields marked as required are needed to send your request.",
+    "title": "Prepare your project request",
+    "stage1": "Step 1 of 2 · Your details",
+    "intro": "Four details are enough to start. Company and website are optional.",
     "fields": {
-      "name": {
-        "label": "Full name",
-        "placeholder": "Your name"
-      },
-      "email": {
-        "label": "Business email",
-        "placeholder": "name@company.com"
-      },
-      "company": {
-        "label": "Company",
-        "placeholder": "Company name"
-      },
-      "website": {
-        "label": "Website",
-        "placeholder": "yourcompany.com",
-        "hint": "Optional, but helpful."
-      },
-      "service": {
-        "label": "Service required",
-        "placeholder": "Select a service"
-      },
-      "message": {
-        "label": "Project description",
-        "placeholder": "What would you like to achieve, and what is the timeline?"
-      }
+      "name": { "label": "Full name", "placeholder": "Your name" },
+      "email": { "label": "Business email", "placeholder": "name@company.com" },
+      "service": { "label": "Service", "placeholder": "Select a service" },
+      "message": { "label": "Project summary", "placeholder": "What would you like to achieve?" },
+      "company": { "label": "Company", "placeholder": "Company name" },
+      "website": { "label": "Website", "placeholder": "yourcompany.com" }
     },
+    "more": "Add company and website (optional)",
     "other": "Not sure yet — advise me",
     "errors": {
       "required": "Please complete this field.",
       "email": "Please enter a valid email address.",
-      "website": "Please enter a valid web address, for example https://yourcompany.com.",
+      "website": "Please enter a valid web address, for example yourcompany.com.",
       "select": "Please choose a service.",
       "summary": "Please correct the highlighted fields."
     },
     "submit": "Prepare my request",
-    "success": {
-      "title": "Your request is ready",
-      "text": "Choose how to send it. Your details are placed in a message for you — nothing is sent until you press send in your email app or WhatsApp.",
-      "whatsapp": "Send via WhatsApp",
-      "email": "Send via email",
+    "helper": "This does not send anything. It prepares a message that you review, then send yourself by WhatsApp or email, or copy.",
+    "ready": {
+      "stage": "Step 2 of 2 · Review and send yourself",
+      "title": "Your request is prepared — not sent yet",
+      "text": "Check the message below, then choose how to send it. SABER DIGITAL PRO receives nothing until you press send in WhatsApp or in your email app.",
+      "whatsapp": "Open WhatsApp with this message",
+      "email": "Open email with this message",
       "copy": "Copy message",
       "copied": "Message copied",
       "edit": "Edit details"
     },
-    "privacy": "We use your details only to reply to your request.",
+    "privacy": "Your details stay in your browser until you choose to send them. We use them only to reply.",
     "msgIntro": "New project enquiry — SABER DIGITAL PRO website",
     "msgLabels": {
       "name": "Name",
@@ -546,7 +533,7 @@
     "emailSubject": "Project enquiry"
   },
   "footer": {
-    "tagline": "Digital strategy, SEO content and web experiences for ambitious brands in the UAE, Saudi Arabia and worldwide.",
+    "tagline": "SEO content, websites and optimization for businesses in the UAE, Saudi Arabia and worldwide, in English, French and Arabic.",
     "colServices": "Services",
     "colCompany": "Studio",
     "colContact": "Contact",
@@ -557,12 +544,8 @@
     "availability": "Working with clients in the UAE, Saudi Arabia and internationally."
   },
   "ld": {
-    "orgDescription": "SABER DIGITAL PRO is a digital studio offering SEO content strategy, website design and development, e-commerce optimization and AI-powered website assistants in English, French and Arabic.",
-    "areaServed": [
-      "United Arab Emirates",
-      "Saudi Arabia",
-      "Worldwide"
-    ],
+    "orgDescription": "SABER DIGITAL PRO is a digital studio offering SEO content strategy, website design and development, e-commerce optimization, website audits and AI website assistants in English, French and Arabic.",
+    "areaServed": ["United Arab Emirates", "Saudi Arabia", "Worldwide"],
     "serviceType": "Digital marketing and web services"
   }
 }
