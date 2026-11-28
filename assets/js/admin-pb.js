@@ -1887,7 +1887,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* النوافذ واللوحات العائمة الملحقة بالصفحة (لا بداخل #pb-app): تُغلق كلها مع المحرر وإلا بقيت ظاهرة فوق لوحة التحكم (مكتبة الصور، تحميل الصور، لوحة تعديل الصورة، القوائم، تغيير المقاس…) */
   function closeFloating() {
-    try { if (typeof PBPalette !== "undefined") PBPalette.close(); } catch (x) { } try { if (typeof PBFx !== "undefined") PBFx.close(); } catch (x) { } try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
+    try { if (typeof PBPalette !== "undefined") PBPalette.close(); } catch (x) { } try { if (typeof PBFx !== "undefined") PBFx.close(); } catch (x) { } try { if (window.AdminColorPick) AdminColorPick.close(); } catch (x) { } try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
     ["pbx-orgp", "pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
@@ -2250,7 +2250,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   const wheelStep = e => e.deltaY < 0 ? 1.1 : 1 / 1.1;
   /* قائمة الهاتف: تُبنى من أزرار الشريط العلوي نفسها (فأي زر جديد يظهر فيها تلقائياً) بأسماء عربية واضحة؛ الضغط على البند يضغط الزر الأصلي */
   const MM_NAMES = { "pbx-mmb": "", "pbx-rn": "تعديل اسم الصفحة", "pbx-clb": "نسخ قالب من موقع أو صورة", "pbx-undo": "تراجع", "pbx-redo": "إعادة", "pbx-allfree": "تحويل كل الأقسام إلى عناصر حرة", "pbx-org": "تنظيم الصفحة بزر واحد", "pbx-allung": "فكّ ربط كل العناصر", "pbx-fxpb": "تأثيرات حركة الصفحة", "pbx-palb": "ألوان الصفحة", "pbx-updb": "تحديث اللوحة لآخر نسخة", "pbx-histb": "السجل: الرجوع لأي مرحلة", "pbx-prev": "معاينة الصفحة", "pbx-adsz": "تغيير مقاس التصميم", "pbx-adx": "تصدير الصورة", "pbx-pubb": "حفظ ونشر", "pbx-anim": "تشغيل حركات الظهور" };
-  const MM_GROUPS = [["العرض", ["d", "t", "m"]], ["الصفحة", ["pbx-rn", "pbx-clb", "pbx-prev", "pbx-histb", "pbx-undo", "pbx-redo"]], ["الأدوات", ["pbx-allfree", "pbx-org", "pbx-allung", "pbx-fxpb", "pbx-palb", "pbx-adsz", "pbx-adx"]], ["النشر والنظام", ["pbx-pubb", "pbx-updb"]]];
+  const MM_GROUPS = [["العرض", ["d", "t", "m"]], ["الصفحة", ["pbx-rn", "pbx-clb", "pbx-prev", "pbx-histb"]], ["الأدوات", ["pbx-allfree", "pbx-org", "pbx-allung", "pbx-fxpb", "pbx-palb", "pbx-adsz", "pbx-adx"]], ["النشر والنظام", ["pbx-pubb", "pbx-updb"]]];
   function mmLabel(b) { if (b.dataset && b.dataset.dv) return { d: "عرض المكتب", t: "عرض التابلت", m: "عرض الهاتف" }[b.dataset.dv] || b.title; if (MM_NAMES[b.id]) return MM_NAMES[b.id]; const t = b.querySelector && b.querySelector(".tbt"); if (t && t.textContent.trim()) return t.textContent.trim(); const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const ti = (b.getAttribute("title") || "").split(/[:：(（—]/)[0].trim(); return (ti || (b.textContent || "").trim()).slice(0, 44); }
   const mmShown = b => { try { return !!b && getComputedStyle(b).display !== "none"; } catch (e) { return false; } };
   function mmBuild() {
@@ -2258,6 +2258,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const item = (b, key) => { used.add(b); const svg = b.querySelector("svg"), on = b.classList.contains("on") || (b.dataset && b.dataset.dv && b.classList.contains("on")); return `<button type="button" class="pbx-mi${on ? " on" : ""}" role="menuitem" data-mmk="${esc(key)}"><span class="mi-ic">${svg ? svg.outerHTML : '<b>•</b>'}</span><span>${esc(mmLabel(b))}</span></button>`; };
     const map = {}; [...top.children].forEach(c => { if (c.id) map[c.id] = c; if (c.dataset && c.dataset.dv) map[c.dataset.dv] = c; });
     const more = $("pbx-moremenu"); if (more) [...more.querySelectorAll("button")].forEach(c => { if (c.id) map[c.id] = c; });
+    ["pbx-undo", "pbx-redo"].forEach(id => { if (map[id]) used.add(map[id]); });      /* تراجع/إعادة في الشريط العلوي نفسه: لا تُكرَّر في القائمة */
     const keys = {}; MM_GROUPS.forEach(([name, ids]) => { let g = ""; ids.forEach(id => { const b = map[id]; if (b && mmShown(b)) { g += item(b, id); keys[id] = b; } });
       if (name === "العرض") { const zm = $("pbx-zm"); if (zm && mmShown(zm)) { g += `<div class="pbx-mz" data-mmz="1"><b>تكبير القماش</b><button type="button" data-z="-" aria-label="تصغير">−</button><span id="pbx-mzv">${($("pbx-zv") || {}).textContent || "100%"}</span><button type="button" data-z="+" aria-label="تكبير">+</button><button type="button" data-z="0" aria-label="ملاءمة العرض">⤢</button></div>`; } }
       if (g) h += `<div class="pbx-mh">${name}</div>` + g; });

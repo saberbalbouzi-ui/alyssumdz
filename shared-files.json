@@ -225,6 +225,7 @@
     "assets/js/admin-theme.js",
     "assets/js/admin-toolwin.js",
     "assets/js/admin-tplsite.js",
+    "assets/js/admin-colorpick.js",
     "assets/js/admin-update.js",
     "assets/js/admin-upsell.js",
     "assets/js/admin-voice.js",

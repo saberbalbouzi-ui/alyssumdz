@@ -1076,5 +1076,15 @@
  "تمّ التحديث": "Mise à jour terminée",
  "جارٍ إعادة فتح المحرر بعملك": "Réouverture de l’éditeur avec votre travail",
  "تم تحديث الصفحة": "Page mise à jour",
- "✅ تم تحديث الصفحة": "✅ Page mise à jour"
+ "✅ تم تحديث الصفحة": "✅ Page mise à jour",
+ "اختيار اللون": "Choisir une couleur",
+ "درجة اللون": "Teinte",
+ "قطّارة": "Pipette",
+ "اختر صورة أو لقطة شاشة ثم المس اللون": "Choisissez une image ou une capture d’écran, puis touchez la couleur",
+ "المس الصورة لالتقاط اللون": "Touchez l’image pour capter la couleur",
+ "آخر الألوان": "Dernières couleurs",
+ "ألوان سريعة": "Couleurs rapides",
+ "إلغاء": "Annuler",
+ "تعيين": "Définir",
+ "النشر والنظام": "Publication et système"
 }
