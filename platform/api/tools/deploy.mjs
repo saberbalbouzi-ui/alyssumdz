@@ -8,7 +8,7 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { randomBytes, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { deployPlan } from "../src/envguard.js";
-import { compare, mergeMeta, parseMultipart } from "./deploy-diff.mjs";
+import { compare, mergeMeta, parseMultipart, writeReleaseSha, readReleaseMeta } from "./deploy-diff.mjs";
 const REG = JSON.parse(readFileSync(new URL("../../env/environments.json", import.meta.url), "utf8"));
 const args = process.argv.slice(2), flag = (n) => args.includes(n), opt = (n) => (flag(n) ? args[args.indexOf(n) + 1] : null), DRY = flag("--dry-run");
 let plan; try { plan = deployPlan(REG, { kind: "api", env: opt("--env"), flags: { production: flag("--production") }, vars: process.env }); } catch (e) { console.error("✖ " + e.message); process.exit(2); }
@@ -61,7 +61,8 @@ function localState() {
 }
 async function stepDiff() {
   const r = await readRemote(); if (!r) { console.log("لا Worker منشور بهذا الاسم (أو وضع dry-run) — لا شيء للمقارنة"); return; }
-  const c = compare(localState(), r); console.log("— مقارنة " + NAME + " (المنشور ← المحلي) —"); for (const l of c.lines) console.log(" ·", l);
+  const L = localState(), did = await dbId().catch(() => null), db = did && L.bindings.find((b) => b.type === "d1"); if (db) db.id = did;   // معرّف D1 الحقيقي (قراءة) كي لا يظهر فرق وهمي
+  const c = compare(L, r); console.log("— مقارنة " + NAME + " (المنشور ← المحلي) —"); for (const l of c.lines) console.log(" ·", l);
   console.log(c.risks.length ? "\nمخاطر:\n" + c.risks.map((x) => " ⚠ " + x).join("\n") : "\nلا مخاطر مرصودة"); console.log(c.same ? "النتيجة: مطابق" : "النتيجة: توجد فروق — راجعها قبل worker");
 }
 function workerMeta(id) { const S = sha(), V = version(); return { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ type: "d1", name: "DB", id }, { type: "plain_text", name: "PUBLIC_URL", text: plan.publicUrl }, { type: "plain_text", name: "ENVIRONMENT", text: plan.env }, { type: "plain_text", name: "GIT_SHA", text: S }, { type: "plain_text", name: "APP_VERSION", text: V }, { type: "plain_text", name: "SCHEMA_HASH", text: SCHEMA_HASH }], keep_bindings: ["secret_text"] }; }
@@ -75,7 +76,7 @@ async function stepWorker() {
   for (const f of files("src/")) fd.append(f, new Blob([readFileSync(here("src/" + f))], { type: "application/javascript+module" }), f);
   await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}`, fd); console.log("Worker رُفع:", NAME, "· sha", S.slice(0, 12), "· version", V);
   if (KEEP) console.log("cron: لم يُمسّ (--keep-existing)"); else { await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/schedules`, [{ cron: "* * * * *" }]); console.log("cron كل دقيقة مضبوط (لهذا الـWorker وحده)"); }
-  await q(id, "INSERT INTO pf_meta (k,v,at) VALUES ('release_sha',?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at", [S, new Date().toISOString()]);
+  const rel = await writeReleaseSha(q, id, S, new Date().toISOString()); if (!rel.written) console.warn("⚠ " + rel.warning);   // الـWorker رُفع فعلاً؛ غياب pf_meta ليس فشل نشر
 }
 async function stepSecrets(save) {
   const have = new Set(((await cf("GET", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/secrets`).catch(() => [])) || []).map((s) => s.name)); const out = {};
@@ -102,7 +103,7 @@ async function stepMeta() {
 /** يعرض الإصدار المنشور: آخر نشرات الـWorker + هوية/SHA/مخطط القاعدة (للتحقق قبل/بعد الترقية) */
 async function stepStatus() {
   const dep = await cf("GET", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/deployments`), list = dep?.deployments ?? dep ?? []; console.log("آخر النشرات:", JSON.stringify(list.slice(0, 3).map((d) => ({ id: d.id, at: d.created_on, versions: (d.versions || []).map((v) => v.version_id) }))));
-  const id = await dbId(); if (id) { const r = await q(id, "SELECT k,v FROM pf_meta WHERE k IN ('environment','schema_hash','release_sha','rollback_to')"); console.log("pf_meta:", JSON.stringify(r?.[0]?.results ?? [])); }
+  const id = await dbId(); if (id) { const m = DRY ? { available: true, rows: [] } : await readReleaseMeta(q, id); console.log(m.available ? "pf_meta: " + JSON.stringify(m.rows) : "بيانات الإصدار (pf_meta): غير متاحة — الجدول غير موجود في هذه القاعدة؛ لا يمكن إثبات sha/هوية/مخطط من القاعدة"); }
   console.log("المتوقع من هذا المستودع: sha", sha().slice(0, 12), "· version", version(), "· schema_hash", SCHEMA_HASH);
 }
 /** تراجع إلى النشرة السابقة لهذا الـWorker فقط (Cloudflare Versions). لا يمسّ قاعدة D1 ولا أي Worker آخر؛ استعادة البيانات إجراء منفصل (D1 Time Travel) على قاعدة هذه البيئة وحدها */

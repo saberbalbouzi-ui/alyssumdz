@@ -1,5 +1,5 @@
 // اختبار منطق diff/merge بلا شبكة (لم يُجرَّب مع واجهة Cloudflare الحقيقية)
-import { compare, mergeMeta, parseMultipart, sha8 } from "../tools/deploy-diff.mjs";
+import { compare, mergeMeta, parseMultipart, sha8, writeReleaseSha, readReleaseMeta } from "../tools/deploy-diff.mjs";
 let ok = 0, bad = 0; const t = (n, c) => { if (c) ok++; else { bad++; console.log("✗", n); } };
 const remote = { compatibility_date: "2025-06-01", compatibility_flags: ["nodejs_compat"], bindings: [{ name: "DB", type: "d1", id: "x" }, { name: "PUBLIC_URL", type: "plain_text", text: "https://a" }, { name: "ADMIN_TOKEN", type: "secret_text" }, { name: "OLD_KV", type: "kv_namespace", namespace_id: "n1" }, { name: "SOME_KEY", type: "plain_text", text: "topsecret" }], schedules: [{ cron: "*/5 * * * *" }], files: { "index.js": "a", "modules/x.js": "b", "gone.js": "z" } };
 const meta = { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ name: "DB", type: "d1", id: "x" }, { name: "PUBLIC_URL", type: "plain_text", text: "https://a" }, { name: "GIT_SHA", type: "plain_text", text: "s" }], keep_bindings: ["secret_text"] };
@@ -26,4 +26,17 @@ const b = "XYZ", body = `--${b}\r\nContent-Disposition: form-data; name="index.j
 const p = parseMultipart(body, b);
 t("multipart parse", p["index.js"] === "export default 1;" && p["modules/m.js"] === "line1\nline2");
 t("sha8", sha8("a") === sha8("a") && sha8("a") !== sha8("b"));
+t("سطر نهائي فقط ليس فرقاً", !compare({ bindings: [], files: { "a.js": "x\n" } }, { bindings: [], files: { "a.js": "x" }, schedules: [] }).lines.some((l) => /فرق/.test(l)) );
+t("database_id الزائد ليس تغيّراً", !compare({ bindings: [{ type: "d1", name: "DB", id: "i" }], schedules: [] }, { bindings: [{ type: "d1", name: "DB", id: "i", database_id: "i" }], schedules: [] }).lines.some((l) => /يتغيّر/.test(l)));
+// pf_meta: وجود الجدول وغيابه (q وهمي)
+const mk = (has, log) => async (_id, sql, params) => { log.push(sql); if (/sqlite_master/.test(sql)) return [{ results: has ? [{ name: "pf_meta" }] : [] }]; if (/^SELECT k,v/.test(sql)) return [{ results: [{ k: "release_sha", v: "abc" }] }]; return [{ results: [] }]; };
+{ const L1 = [], L2 = [];
+  const a = await writeReleaseSha(mk(true, L1), "id", "sha1", "now"), b2 = await writeReleaseSha(mk(false, L2), "id", "sha1", "now");
+  t("pf_meta موجود: يكتب release_sha", a.written === true && L1.some((x) => /INSERT INTO pf_meta/.test(x)));
+  t("pf_meta غائب: لا INSERT ولا إنشاء جدول، تحذير واضح، ليس فشلاً", b2.written === false && /pf_meta/.test(b2.warning) && !L2.some((x) => /INSERT|CREATE/i.test(x)));
+  const s1 = await readReleaseMeta(mk(true, []), "id"), s2 = await readReleaseMeta(mk(false, []), "id");
+  t("status: متاح عند وجود الجدول", s1.available === true && s1.rows.length === 1);
+  t("status: غير متاح (لا نجاح مزعوم) عند غيابه", s2.available === false && s2.rows.length === 0);
+  const boom = async (_id, sql) => { if (/sqlite_master/.test(sql)) throw new Error("net"); return []; };
+  t("خطأ قراءة الفحص لا يُخفى", await writeReleaseSha(boom, "id", "s", "n").then(() => false, () => true)); }
 console.log(bad ? `✗ ${bad} فشل / ${ok} نجح` : `✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
