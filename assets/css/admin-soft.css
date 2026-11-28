@@ -366,3 +366,8 @@ html.white #tab-orders #ord-chiprow #op-bulk.on>.opb{order:3;flex:1 1 calc(50% -
 html.white #tab-orders #ord-chiprow #op-bulk.on::after{content:"";order:2;flex:0 0 100%;height:0}
 html.white #tab-orders #ord-chiprow #op-bulk.on>span:first-child{flex:1 1 0}
 html.white #tab-orders #ord-chiprow #op-bulk.on .ts-act{flex:0 0 auto}
+/* أيقونات الأزرار الليمونية/البيضاء تأخذ لون نص الزر (كانت بيضاء فلا تظهر على الليموني) */
+html:is(.glass,.white) body #op-bulk .opb:not(#_) svg,html:is(.glass,.white) body #op-bulk .ts-btn:not(#_) svg{color:inherit!important;stroke:currentColor!important}
+/* المظهر الداكن: زرّا التأكيد والإرسال ليمونيان بنص وأيقونة داكنين، وAction شفاف بنص أبيض */
+html.glass:not(.white) #tab-orders #ord-chiprow #op-bulk.on .opb[data-b="send"]:not(#_),html.glass:not(.white) #tab-orders #ord-chiprow #op-bulk.on .opb[data-b="confirm"]:not(#_){background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important;border:0!important;border-radius:14px!important;box-shadow:none!important;text-shadow:none!important}
+html.glass:not(.white) #tab-orders #ord-chiprow #op-bulk.on .ts-btn:not(#_){background:rgba(255,255,255,.1)!important;color:rgb(255,255,255)!important;border:1px solid rgba(255,255,255,.25)!important;border-radius:14px!important;box-shadow:none!important;text-shadow:none!important}
