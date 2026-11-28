@@ -22,11 +22,10 @@
       "other": true
     },
     "only": [
-      "rdv",
       "tarkiz"
     ],
     "scopeMode": "only",
-    "cmsg": "",
+    "cmsg": "السلام عليكم . اريد التواصل معكم بخصوص  عسل التركيز و تنشيط الذاكرة ",
     "cnum": "",
     "shadow": true,
     "number": "",
@@ -88,5 +87,5 @@
     "shadow": true,
     "page": ""
   },
-  "updatedAt": "2026-11-27T23:29:34.043Z"
+  "updatedAt": "2026-11-28T00:36:35.110Z"
 }
