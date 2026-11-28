@@ -13,6 +13,10 @@ const { chromium } = require("playwright");
     t(path + ": أيقونة واتساب ظاهرة برابط wa.me برقم المتجر المسجَّل (" + STORE + ")", !!r && r.vis && STORE.length > 8 && r.href.indexOf("wa.me/" + STORE) >= 0 && /^M17\.472 14\.382/.test(r.d || ""), r);      // شعار واتساب الحقيقي (هاتف داخل فقاعة) لا سماعة الهاتف
     await c.close();
   }
+  { const c = await b.newContext({ serviceWorkers: "block" }), p = await c.newPage(); await p.goto(base + "/robots.txt"); await p.addScriptTag({ url: base + "/assets/js/float-icons.js" });
+    const w = await p.evaluate(() => { const F = FloatIcons, u = "https://wa.me/213541138189?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7"; return { and: F.waDeep(u, "Mozilla/5.0 (Linux; Android 13) Chrome/120"), ios: F.waDeep(u, "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Safari"), pc: F.waDeep(u, "Mozilla/5.0 (Windows NT 10.0) Chrome/120"), plain: F.waDeep("https://wa.me/213541138189", "Android") }; });
+    t("فتح واتساب مباشرة على الجوال: أندرويد intent:// ببديل wa.me، وiOS whatsapp://، والحاسوب بلا تغيير", /^intent:\/\/send\/\?phone=213541138189&text=%D9%85.*scheme=whatsapp;package=com\.whatsapp;S\.browser_fallback_url=https%3A%2F%2Fwa\.me/.test(w.and) && w.ios === "whatsapp://send?phone=213541138189&text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7" && w.pc === null && /^intent:\/\/send\/\?phone=213541138189#Intent/.test(w.plain), w);
+    await c.close(); }
   { const c = await b.newContext({ serviceWorkers: "block" }), p = await c.newPage(); const errs = [];
     await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
     await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
