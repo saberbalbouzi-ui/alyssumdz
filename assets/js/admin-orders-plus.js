@@ -40,7 +40,7 @@ const AdminOrdersPlus = (() => {
     const b = bar(); if (!b) return; css(); const c = cur(), custom = load();
     const chip = (v, i, own) => `<button type="button" class="opv${same(resolve(v.f), c) && (c.q || c.status || c.wilaya || c.dateFrom || c.dateTo) ? " on" : ""}" data-v="${own ? "c" : "b"}${i}">${esc(v.n)}${own ? '<i data-del="' + i + '" title="حذف العرض">×</i>' : ""}</button>`;
     b.innerHTML = `<div id="op-views"><button type="button" class="opv${!(c.q || c.status || c.wilaya || c.dateFrom || c.dateTo) ? " on" : ""}" data-v="all">كل الطلبات</button>${BUILT.map((v, i) => chip(v, i, false)).join("")}${custom.map((v, i) => chip(v, i, true)).join("")}<button type="button" class="opb gh" data-sv="1" title="يحفظ البحث والفلاتر الحالية كعرض باسم تختاره">+ حفظ العرض الحالي</button></div>
-<div id="op-bulk" class="${sel.size ? "on" : ""}"><span>محدَّد: <b>${sel.size}</b></span><button type="button" class="opb" data-b="confirm" title="يؤكّد الطلبات الجديدة من المحدَّد دفعة واحدة، ويرسلها لشركة التوصيل إن كان الإرسال التلقائي مفعّلاً">✅ تأكيد المحدد</button><button type="button" class="opb" data-b="send" title="يرسل الطلبات المؤكَّدة غير المرسَلة من المحدَّد إلى شركة التوصيل بالتتابع">🚚 إرسال المحدد للشركة</button><button type="button" class="opb gh" data-b="phones">نسخ الأرقام</button>${window.CallSync && CallSync.canAssign() ? '<button type="button" class="opb" data-b="assign" title="يسند الطلبات المحددة إلى مندوبة محددة في مركز الاتصال">👥 إسناد لمندوبة</button>' : ""}${actionMenu()}<button type="button" class="opb gh" data-b="allf" title="يحدّد كل الطلبات المطابقة للبحث والفلاتر وليس صفحة واحدة فقط">تحديد كل النتائج</button><button type="button" class="opb al" data-b="clear">إلغاء التحديد</button></div>`;
+<div id="op-bulk" class="${sel.size ? "on" : ""}"><span>محدَّد: <b>${sel.size}</b></span><button type="button" class="opb" data-b="confirm" title="يؤكّد الطلبات الجديدة من المحدَّد دفعة واحدة، ويرسلها لشركة التوصيل إن كان الإرسال التلقائي مفعّلاً">✅ تأكيد المحدد</button><button type="button" class="opb" data-b="send" title="يرسل الطلبات المؤكَّدة غير المرسَلة من المحدَّد إلى شركة التوصيل بالتتابع">🚚 إرسال المحدد للشركة</button>${actionMenu()}</div>`;
     b.onclick = e => {
       const t = e.target.closest("button,i"); if (!t) return;
       if (t.dataset.del !== undefined) { e.stopPropagation(); const v = load(); if (confirm("حذف العرض «" + v[+t.dataset.del].n + "»؟")) { v.splice(+t.dataset.del, 1); save(v); drawBar(); } return; }
@@ -54,7 +54,10 @@ const AdminOrdersPlus = (() => {
   const ordRows = L => L.map(o => [o.id, new Date(o.date).toLocaleString("ar-DZ"), o.name, o.phone, o.wilaya || "", o.commune || "", String(o.items || "").replace(/\n/g, " "), Number(o.total) || 0, (A().ST_AR || {})[o.status] || o.status]);
   function actionMenu() {
     if (!window.TableSel) return "";
-    return window.TableSel.menuHtml([{ g: "طباعة", k: "print-invoice", l: "🧾 فواتير (A4)" }, { g: "طباعة", k: "print-table", l: "🖨 جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }, { g: "إجراءات", k: "delete", l: "🗑 نقل المحدد إلى سلة المهملات", c: "danger" }], "data-b");
+    const it = [{ g: "التحديد", k: "allf", l: "تحديد كل النتائج" }, { g: "التحديد", k: "clear", l: "إلغاء التحديد" }, { g: "نسخ وإسناد", k: "phones", l: "نسخ الأرقام" }];
+    if (window.CallSync && CallSync.canAssign()) it.push({ g: "نسخ وإسناد", k: "assign", l: "إسناد لمندوبة" });
+    it.push({ g: "طباعة", k: "print-invoice", l: "فواتير (A4)" }, { g: "طباعة", k: "print-table", l: "جدول الطلبات المحددة" }, { g: "تحميل", k: "csv", l: "ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "ملف Excel" }, { g: "إجراءات", k: "delete", l: "نقل المحدد إلى سلة المهملات", c: "danger" });
+    return window.TableSel.menuHtml(it, "data-b");
   }
   const chosen = () => (A().orders || []).filter(o => sel.has(String(o.id)));
   function bulk(a) {

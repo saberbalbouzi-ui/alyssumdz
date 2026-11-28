@@ -2,6 +2,8 @@
    بحث + «فلاتر»، صف فلاتر (الحالة/الولاية/من/إلى)، شريط ملخص، وجدول موحَّد (التتبع+نسخ، تاريخ التسجيل، العميل/الولاية، الحالة، قائمة ⋮).
    يقرأ Admin.shippedOrders() وAdmin.shipRaw فقط؛ بقية أدوات الصفحة القديمة (بطاقات الشركات، التنبيهات، الإعدادات) تبقى تحت زر «أدوات الشركة والتنبيهات». */
 (function () {
+  /* بطلب صاحب المتجر عادت قائمة «الطلبات المسجلة» القديمة؛ هذا التصميم معطَّل ويُفعَّل فقط بـ localStorage.sh_soft = "1" */
+  try { if (localStorage.getItem("sh_soft") !== "1") { window.AdminShippedSoft = { draw() { }, S: {} }; return; } } catch (e) { window.AdminShippedSoft = { draw() { }, S: {} }; return; }
   const $ = id => document.getElementById(id), T = s => (window.AdminI18n && AdminI18n.t) ? AdminI18n.t(s) : s;
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const S = { co: "", st: "", wil: "", from: "", to: "", q: "", sel: new Set(), tools: false, adv: false, lim: 25 };

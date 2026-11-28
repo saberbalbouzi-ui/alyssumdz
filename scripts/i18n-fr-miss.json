@@ -1088,5 +1088,14 @@
  "تعيين": "Définir",
  "النشر والنظام": "Publication et système",
  "ألوان الصفحة": "Couleurs de la page",
- "تعديل الصفحة": "Modification de la page"
+ "تعديل الصفحة": "Modification de la page",
+ "نسخ وإسناد": "Copie et attribution",
+ "يفتح في": "S’ouvre dans",
+ "التحديد": "Sélection",
+ "ملف CSV (يفتح في Google Sheets/Excel)": "Fichier CSV (s’ouvre dans Google Sheets/Excel)",
+ "فواتير (A4)": "Factures (A4)",
+ "نقل المحدد إلى سلة المهملات": "Déplacer la sélection vers la corbeille",
+ "ملف Excel": "Fichier Excel",
+ "جدول الطلبات المحددة": "Tableau des commandes sélectionnées",
+ "شركة التوصيل": "Société de livraison"
 }

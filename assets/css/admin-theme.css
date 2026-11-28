@@ -478,6 +478,7 @@ html.white [style*="color:var(--g-mint" i],html.white [style*="color: var(--g-mi
 html.white [style*="color:var(--g-ok" i],html.white [style*="color: var(--g-ok" i]{color:#166534!important}
 
 /* منشأ طلب الموقع: حملة (برتقالي) / رابط (رمادي مزرقّ) */
+.o-src.co{background:rgba(22,163,74,.14);color:#15803d;border-color:rgba(22,163,74,.4)}html.glass .o-src.co{color:#86efac}
 .o-src.camp{background:rgba(234,88,12,.14);color:#c2410c;border-color:rgba(234,88,12,.4)}
 .o-src.link{background:rgba(100,116,139,.14);color:#475569;border-color:rgba(100,116,139,.4)}
 html.glass .o-src.camp{color:#fdba74}html.glass .o-src.link{color:#cbd5e1}
