@@ -25,10 +25,16 @@ function png(w, h, rgb) { const raw = Buffer.alloc((w * 3 + 1) * h); for (let y 
   await p.waitForSelector("#cpk-img", { state: "visible" }); await p.waitForTimeout(200);
   const cb = await p.locator("#cpk-cv canvas").boundingBox(); await p.mouse.click(cb.x + cb.width / 2, cb.y + cb.height / 2); await p.click(".cpk-ok");
   t("القطّارة من صورة تلتقط اللون بدقة", (await p.evaluate(() => document.getElementById("tc").value)) === "#0ac85a", await p.evaluate(() => document.getElementById("tc").value));
+  // ألوان الصفحة المفتوحة في المطوّر
+  await p.evaluate(async () => { document.getElementById("app").classList.remove("hidden"); window.toast = () => { }; PBApp.open({ v: 1, title: "t", slug: "t-cp", ff: "Cairo", css: "a{color:#AB12CD}", sections: [{ id: "s1", set: { kind: "canvas", mh: { d: 300, t: 300, m: 300 }, bg: "#112233" }, free: [{ id: "x", type: "text", set: { color: "#112233", href: "#fad", bg: "rgba(10,20,30,.5)" } }], cols: [] }] }, "", true); await new Promise(r => setTimeout(r, 1200)); });
+  await p.evaluate(() => { document.getElementById("tc").value = "#000000"; }); await p.evaluate(() => AdminColorPick.open(document.getElementById("tc"))); await p.waitForSelector("#cpk-box");
+  const pg = await p.evaluate(() => [...document.querySelectorAll("#cpk-pg button")].map(b => b.dataset.c));
+  t("ألوان الصفحة المستعملة تظهر بترتيب التكرار بلا روابط", pg[0] === "#112233" && pg.includes("#ab12cd") && pg.includes("#0a141e") && !pg.includes("#ffaadd") && !pg.includes("#fad") && !pg.includes("#ffaadd"), pg);
+  await p.click('#cpk-pg button[data-c="#ab12cd"]'); await p.click(".cpk-ok"); t("اختيار لون من ألوان الصفحة يُطبَّق", (await p.evaluate(() => document.getElementById("tc").value)) === "#ab12cd");
   // الفرنسية
-  await p.evaluate(() => AdminI18n.set("fr")); await p.waitForTimeout(500); await p.click("#tc"); await p.waitForSelector("#cpk-box"); await p.waitForTimeout(500);
-  const fr = await p.evaluate(() => ({ h: document.querySelector("#cpk-box h4").textContent, ok: document.querySelector(".cpk-ok").textContent, no: document.querySelector(".cpk-no").textContent }));
-  t("بالفرنسية تُترجَم النافذة", /Choisir/.test(fr.h) && /Définir/.test(fr.ok) && /Annuler/.test(fr.no), fr);
+  await p.evaluate(() => AdminI18n.set("fr")); await p.waitForTimeout(500); await p.evaluate(() => AdminColorPick.open(document.getElementById("tc"))); await p.waitForSelector("#cpk-box"); await p.waitForTimeout(500);
+  const fr = await p.evaluate(() => ({ h: document.querySelector("#cpk-box h4").textContent, ok: document.querySelector(".cpk-ok").textContent, no: document.querySelector(".cpk-no").textContent, pgl: (document.querySelector("#cpk-pg") || {}).previousElementSibling ? document.querySelector("#cpk-pg").previousElementSibling.textContent : "" }));
+  t("بالفرنسية تُترجَم النافذة (وألوان الصفحة)", /Choisir/.test(fr.h) && /Couleurs de la page/.test(fr.pgl) && /Définir/.test(fr.ok) && /Annuler/.test(fr.no), fr);
   await p.click(".cpk-no"); t("«Annuler» يغلق", !(await p.$("#cpk-box")));
   await p.evaluate(() => document.getElementById("tc").setAttribute("data-native-color", "1")); t("بلا أخطاء JS", errs.filter(m => !/sandboxed/.test(m)).length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);

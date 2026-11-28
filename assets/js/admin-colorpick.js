@@ -14,6 +14,16 @@ const AdminColorPick = (() => {
   function rgb2hsv(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx]; }
   function hsv2rgb(h, s, v) { const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c; let r = 0, g = 0, b = 0; if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; } else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; } return [(r + m) * 255, (g + m) * 255, (b + m) * 255]; }
   const recent = () => { try { const a = JSON.parse(localStorage.getItem(RK) || "[]"); return Array.isArray(a) ? a.filter(x => hex2rgb(x)).slice(0, 8) : []; } catch (e) { return []; } };
+  /* ألوان الصفحة المفتوحة في المطوّر (بحسب التكرار) كي تُختار دون كتابة HEX */
+  function pageColors() {
+    try {
+      const P = typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page; if (!P) return []; const cnt = new Map(), SKIP = /^(href|url|link|src|id|slug|action|poster|img|image)$/i;
+      const add = h => { h = h.toLowerCase(); cnt.set(h, (cnt.get(h) || 0) + 1); };
+      const scan = str => { if (str.length > 4000 || /:\/\//.test(str)) return; const re = /#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-z])|rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})(?:[\s,\/]+([\d.]+))?/gi; let m; while ((m = re.exec(str))) { if (m[1]) { const h = m[1].length === 3 ? m[1].replace(/(.)/g, "$1$1") : m[1].slice(0, 6); add("#" + h); } else if (m[5] === undefined || parseFloat(m[5]) > 0.05) add(rgb2hex(+m[2], +m[3], +m[4])); } };
+      const walk = (v, k, d) => { if (d > 40) return; if (typeof v === "string") { if (!SKIP.test(k || "")) scan(v); } else if (Array.isArray(v)) v.forEach(x => walk(x, k, d + 1)); else if (v && typeof v === "object") for (const kk in v) walk(v[kk], kk, d + 1); };
+      walk(P, "", 0); return [...cnt.entries()].sort((a, b) => b[1] - a[1]).slice(0, 16).map(x => x[0]);
+    } catch (e) { return []; }
+  }
   const remember = h => { try { const a = [h, ...recent().filter(x => x !== h)].slice(0, 8); localStorage.setItem(RK, JSON.stringify(a)); } catch (e) { } };
 
   const CSS = `#cpk-bg{position:fixed;inset:0;z-index:100075;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl;font-family:inherit}
@@ -56,11 +66,12 @@ html.white #cpk-box{background:#fdfefb;color:#1f2123;border-color:rgba(0,0,0,.14
     if (!document.getElementById("cpk-css")) { const st = document.createElement("style"); st.id = "cpk-css"; st.textContent = CSS; document.head.appendChild(st); }
     const orig = (hex2rgb(el.value) ? el.value.toLowerCase() : "#000000"), rgb = hex2rgb(orig), hsv = rgb2hsv(rgb[0], rgb[1], rgb[2]);
     const bg = document.createElement("div"); bg.id = "cpk-bg";
-    const rec = recent();
+    const rec = recent(), pg = pageColors();
     bg.innerHTML = `<div id="cpk-box" role="dialog" aria-modal="true"><h4>اختيار اللون</h4>
 <div id="cpk-sv"><i></i></div><input type="range" id="cpk-hue" min="0" max="360" step="1" aria-label="${T("درجة اللون")}">
 <div class="cpk-row"><span id="cpk-prev"></span><input id="cpk-hex" type="text" maxlength="7" spellcheck="false" autocomplete="off" aria-label="HEX"><button type="button" id="cpk-eye">قطّارة</button></div>
 <div id="cpk-img"><div id="cpk-cv"><canvas></canvas><i style="display:none"></i></div><div id="cpk-hint">المس الصورة لالتقاط اللون</div></div>
+${pg.length ? `<div class="cpk-lb">ألوان الصفحة</div><div class="cpk-sw" id="cpk-pg">${pg.map(c => `<button type="button" data-c="${c}" style="background:${c} !important" title="${c}"></button>`).join("")}</div>` : ""}
 ${rec.length ? `<div class="cpk-lb">آخر الألوان</div><div class="cpk-sw" id="cpk-rec">${rec.map(c => `<button type="button" data-c="${c}" style="background:${c} !important" title="${c}"></button>`).join("")}</div>` : ""}
 <div class="cpk-lb">ألوان سريعة</div><div class="cpk-sw" id="cpk-bas">${BASIC.map(c => `<button type="button" data-c="${c}" style="background:${c} !important" title="${c}"></button>`).join("")}</div>
 <div class="cpk-act"><button type="button" class="cpk-no">إلغاء</button><button type="button" class="cpk-ok">تعيين</button></div></div>`;
