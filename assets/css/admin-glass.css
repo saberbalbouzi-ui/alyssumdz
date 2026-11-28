@@ -549,3 +549,7 @@ html.glass .ts-menu,html.glass .ts-bar{background:#0b1f17!important;backdrop-fil
 html.white .dlv-sw i{background:#e2e8f0;border-color:#cbd5e1;box-shadow:inset 0 1px 2px rgba(15,23,42,.12)}
 html.white .dlv-sw input:checked + i{background:#22c55e!important;border-color:#15803d!important}
 html.white .dlv-sw span{color:#0f172a}html.white .dlv-sw input:checked ~ span{color:#15803d}
+
+/* شريط إجراءات العنصر على الهاتف (أعلى/أسفل/نسخ/إعدادات…): خلفيته داكنة دائماً فنصوصه وأيقوناته بيضاء في كل المظاهر */
+html:is(.glass,.white) body .pbx-mbar button:not(#_),html:is(.glass,.white) body .pbx-mbar2 button:not(#_),html:is(.glass,.white) body .pbx-mbar small:not(#_),html:is(.glass,.white) body .pbx-mbar2 small:not(#_){color:rgb(255,255,255)!important}
+html:is(.glass,.white) body .pbx-mbar button svg:not(#_),html:is(.glass,.white) body .pbx-mbar2 button svg:not(#_){stroke:currentColor!important}
