@@ -387,7 +387,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   function guard() {
     let touched = false; const mark = () => { touched = true; };
     document.addEventListener("pointerdown", mark, { capture: true, once: true }); document.addEventListener("keydown", mark, { capture: true, once: true });
-    [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); const land = (typeof AdminEdition !== "undefined" && AdminEdition.edition() === "design") ? "builder" : (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") ? "digital" : "home"; if (on && !new RegExp("'" + land + "'").test(on.getAttribute("onclick") || "")) open(); }, ms));
+    [1200, 3000].forEach(ms => setTimeout(() => { if (touched || window.__auHold || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); const land = (typeof AdminEdition !== "undefined" && AdminEdition.edition() === "design") ? "builder" : (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") ? "digital" : "home"; if (on && !new RegExp("'" + land + "'").test(on.getAttribute("onclick") || "")) open(); }, ms));
   }
   /* زر/سحب الرجوع (من حافة الشاشة) لا يغلق اللوحة: يغلق النافذة المفتوحة أولاً، ثم يعود للقسم السابق، وعلى الرئيسية يحذّر مرة قبل الخروج.
      مدخل سجلّ «حارس» يُعاد دفعه بعد كل رجوع (الاستوديو وروابط الأدوات تدفع مداخلها الخاصة فلا يتعارض معها: لا نتصرف إلا عند بلوغ المدخل الأساسي). */
@@ -414,7 +414,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     a.__homeWrap = 1; const o = a.renderAll;
     /* الرئيسية تُفتح حتى لو تعثّر رسم قسم آخر (finally) وفور إظهار اللوحة دون انتظار أي رسم: كان تعثّر renderAll يترك «الطلبات» ظاهرة طويلاً */
     a.renderAll = function () { try { return o.apply(this, arguments); } finally { try { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } } catch (e) { console.warn("AdminHome", e); } } };
-    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { open(); guard(); backGuard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
+    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { if (!window.__auHold) open(); guard(); backGuard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
     const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); try { trackTab(t); } catch (e) { } return r; };
     if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } }
   }

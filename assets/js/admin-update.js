@@ -1,7 +1,7 @@
 /* تحديث لوحة الإدارة لآخر نسخة منشورة: زر «تحديث» في شريط اللوحة وفي شريط مطوّر الصفحات، وإشعار عند وجود نسخة أحدث.
    النسخة الحالية في <meta name="admin-version"> (يكتبها scripts/build-admin-pb.py من ملف VERSION)، والأحدث تُقرأ من /VERSION على الخادم. */
 /* غطاء «إكمال التحديث»: عند العودة من تحديث كان المحرر مفتوحاً فيه يُغطّى كل شيء فوراً (لا تظهر لوحة الإدارة بين الإغلاق وإعادة الفتح) حتى يُفتح المحرر بعمله */
-(function () { try { const st = JSON.parse(sessionStorage.getItem("au_state") || "null"); if (!st || !st.pb || Date.now() - st.t > 600000) return; const d = document.createElement("div"); d.id = "au-cover"; d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#0b1210;color:#f1f5f2;display:flex;flex-direction:column;gap:.9rem;align-items:center;justify-content:center;font-family:inherit;font-weight:800;direction:rtl"; d.innerHTML = '<span style="width:34px;height:34px;border:4px solid rgba(226,254,23,.25);border-top-color:#e2fe17;border-radius:50%;display:inline-block;animation:aucv .8s linear infinite"></span><span>تمّ التحديث… جارٍ إعادة فتح المحرر بعملك</span><style>@keyframes aucv{to{transform:rotate(360deg)}}</style>'; const fitVp = () => { try { const v = window.visualViewport; if (!v) return; d.style.inset = "auto"; d.style.left = v.offsetLeft + "px"; d.style.top = v.offsetTop + "px"; d.style.width = v.width + "px"; d.style.height = v.height + "px"; } catch (e) { } }; (document.body || document.documentElement).appendChild(d); fitVp(); try { if (window.visualViewport) { visualViewport.addEventListener("resize", fitVp); visualViewport.addEventListener("scroll", fitVp); } } catch (e) { } const iv = setInterval(() => { if (!d.isConnected) clearInterval(iv); else fitVp(); }, 150); setTimeout(() => { const c = document.getElementById("au-cover"); if (c) c.remove(); }, 40000); } catch (e) { } })();
+(function () { try { const st = JSON.parse(sessionStorage.getItem("au_state") || "null"); if (!st || Date.now() - st.t > 600000) return; window.__auHold = 1;      /* الغطاء لكل تحديث (لا للمطوّر وحده): لا تُرى الرئيسية بين إعادة التحميل وعودة الصفحة */ const d = document.createElement("div"); d.id = "au-cover"; d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#0b1210;color:#f1f5f2;display:flex;flex-direction:column;gap:.9rem;align-items:center;justify-content:center;font-family:inherit;font-weight:800;direction:rtl"; d.innerHTML = '<span style="width:34px;height:34px;border:4px solid rgba(226,254,23,.25);border-top-color:#e2fe17;border-radius:50%;display:inline-block;animation:aucv .8s linear infinite"></span><span>تمّ التحديث… جارٍ إعادة فتح المحرر بعملك</span><style>@keyframes aucv{to{transform:rotate(360deg)}}</style>'; const fitVp = () => { try { const v = window.visualViewport; if (!v) return; d.style.inset = "auto"; d.style.left = v.offsetLeft + "px"; d.style.top = v.offsetTop + "px"; d.style.width = v.width + "px"; d.style.height = v.height + "px"; } catch (e) { } }; (document.body || document.documentElement).appendChild(d); fitVp(); try { if (window.visualViewport) { visualViewport.addEventListener("resize", fitVp); visualViewport.addEventListener("scroll", fitVp); } } catch (e) { } const iv = setInterval(() => { if (!d.isConnected) clearInterval(iv); else fitVp(); }, 150); setTimeout(() => { const c = document.getElementById("au-cover"); if (c) c.remove(); }, 40000); } catch (e) { } })();
 const AdminUpdate = (() => {
   const meta = document.querySelector('meta[name="admin-version"]'), cur = meta ? meta.content : "";
   let latest = "", avail = false, noted = "";
@@ -36,6 +36,14 @@ const AdminUpdate = (() => {
       catch (e) { if (st.pb) { const p = st.pb.page; st.pb.page = null; st.pb.slim = true; try { PBApp.saveDraftNow && PBApp.saveDraftNow(); } catch (x) { } sessionStorage.setItem("au_state", JSON.stringify(st)); st.pb.page = p; } else throw e; }      // صفحة كبيرة لا تتّسع لمخزن الجلسة: تُحفظ مسودتها في المتصفح وتُستعاد منها
     } catch (e) { try { sessionStorage.removeItem("au_state"); } catch (x) { } }
   }
+  /* عودة التبويب فور وصول الطلبات (قبل انتظار بقية التحميل): لا تُرى الرئيسية ولا انتظار؛ وإن كان معه محرّر مفتوح يبقى الغطاء حتى يكتمل التحميل */
+  let earlyDone = false;
+  function early() {
+    if (earlyDone) return; let st = null; try { st = JSON.parse(sessionStorage.getItem("au_state") || "null"); } catch (e) { } if (!st || Date.now() - st.t > 600000) return;
+    earlyDone = true;
+    try { if (st.tab && typeof Admin !== "undefined") { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + st.tab + "'")); if (b) Admin.tab(st.tab, b); } } catch (e) { }
+    if (!st.pb) { try { sessionStorage.removeItem("au_state"); } catch (e) { } try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { } setTimeout(() => { try { const c = document.getElementById("au-cover"); if (c) c.remove(); } catch (e) { } }, 60); toast("✅ تم تحديث الصفحة"); }
+  }
   function restoreState() {
     let st = null; try { st = JSON.parse(sessionStorage.getItem("au_state") || "null"); sessionStorage.removeItem("au_state"); } catch (e) { } if (!st || Date.now() - st.t > 600000) { try { const c = document.getElementById("au-cover"); if (c) c.remove(); } catch (e) { } return; }
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { }
@@ -54,14 +62,14 @@ const AdminUpdate = (() => {
     busy = true; showCover(kind === "cc" ? "جارٍ مسح الكاش وإعادة التحميل…" : "جارٍ التحديث… سيُعاد فتح عملك تلقائياً"); const txt = kind === "cc" ? "جاري مسح الكاش…" : "جاري التحديث…";
     document.querySelectorAll("[data-au], #au-cc, #pbx-cc").forEach(b => { b.disabled = true; const isCC = b.id === "au-cc" || b.id === "pbx-cc"; if (isCC !== (kind === "cc")) return; const t = b.querySelector(".au-t") || b.querySelector("span:last-child"); if (t) t.textContent = txt; else b.textContent = "⏳ " + txt; });
   }
-  /* يجلب الصفحة وسكربتاتها وأنماطها من الخادم متجاوزاً الكاش ثم يعيد تحميل الصفحة نفسها (دون مغادرتها) */
+  /* التحديث السريع: يجلب صفحة اللوحة وVERSION فقط متجاوزاً الكاش (سكربتاتها وأنماطها بوسوم نسخة `?v=` فتنزل المتغيّرة منها وحدها)، ثم يعيد تحميل الصفحة نفسها؛ مسح الكاش وحده يجلب الكل */
   async function reloadFresh(param, val) {
     window.__auReload = true;      /* إعادة التحميل للتحديث تحفظ حالة المطوّر وتعيد فتحها: لا نافذة «مغادرة الموقع؟» */
     { const u0 = new URL(location.href); u0.searchParams.set(param, val); setTimeout(() => { try { location.replace(u0.toString()); } catch (e) { location.reload(); } }, 12000); }      /* صمّام أمان: لا يبقى «جاري التحديث…» أكثر من 12 ثانية مهما حدث */
     saveState(); try { API.sb.dbg("update-reload " + param + " left=" + Math.round(((API.sb.session() || {}).expires_at - Date.now()) / 60000) + "m"); } catch (e) { }
     /* لا نخسر الدخول عند التحديث: نجدّد الجلسة الآن إن قاربت على الانتهاء ونوقف أي تجديد آخر قبل إعادة التحميل (ردّ تجديد ضائع يُبطل رمز التجديد القديم) */
     try { if (typeof API !== "undefined" && API.sb && API.sb.enabled() && API.sb.session()) { const s = API.sb.session(); if (s.expires_at - Date.now() < 4 * 60 * 1000) await Promise.race([API.sb.renew(), new Promise(r => setTimeout(r, 5000))]); API.sb._freeze = true; } } catch (e) { }
-    try { const urls = [location.pathname, "VERSION", ...[...document.scripts].map(x => x.src), ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(x => x.href)].filter(Boolean); await Promise.race([Promise.all(urls.map(u => fetch(u, { cache: "reload" }).catch(() => 0))), new Promise(r => setTimeout(r, 7000))]); } catch (e) { }      /* لا ينتظر أكثر من 7 ثوانٍ: التحديث لا يعلق على مورد بطيء */
+    try { const urls = param === "cc" ? [location.pathname, "VERSION", ...[...document.scripts].map(x => x.src), ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(x => x.href)].filter(Boolean) : [location.pathname, "VERSION"]; await Promise.race([Promise.all(urls.map(u => fetch(u, { cache: "reload" }).catch(() => 0))), new Promise(r => setTimeout(r, 7000))]); } catch (e) { }      /* لا ينتظر أكثر من 7 ثوانٍ: التحديث لا يعلق على مورد بطيء */
     const u = new URL(location.href); u.searchParams.set(param, val); if (latest) u.searchParams.set("v", latest); location.replace(u.toString());
   }
   /* تحديث: يتحقق من آخر نسخة ويعيد تحميل الصفحة نفسها بها، وتعود إلى التبويب/صفحة المطوّر المفتوحة بما فيها من تعديلات */
@@ -99,8 +107,9 @@ const AdminUpdate = (() => {
   function hookRestore() {
     let has = false; try { has = !!sessionStorage.getItem("au_state"); } catch (e) { } if (!has) return;
     let done = false; const run = () => { if (done) return; done = true; setTimeout(restoreState, 200); };
+    const lb0 = setInterval(() => { try { const lb = document.getElementById("login-box"), c = document.getElementById("au-cover"); if (c && lb && !lb.classList.contains("hidden") && lb.offsetParent) { c.remove(); clearInterval(lb0); } } catch (e) { } }, 300); setTimeout(() => clearInterval(lb0), 15000);      /* غير مسجّل الدخول: لا يحجب الغطاء نموذج الدخول */
     const t0 = setInterval(() => { try { if (typeof Admin !== "undefined" && typeof Admin.routeHash === "function" && !Admin.__auHook) { Admin.__auHook = 1; const o = Admin.routeHash; Admin.routeHash = function () { const r = o.apply(this, arguments); run(); return r; }; clearInterval(t0); } } catch (e) { } }, 50);
-    setTimeout(() => { clearInterval(t0); if (!done) run(); }, 12000);
+    setTimeout(() => { clearInterval(t0); if (!done) run(); }, 6000);
   }
   const init = () => {
     const add = () => { const top = document.querySelector("#app .top"); if (!top || document.getElementById("au-btn")) return; const b = document.createElement("button"); b.id = "au-btn"; b.type = "button"; b.className = "small gold au-b"; b.setAttribute("data-au", "1"); b.innerHTML = '<span class="au-i">🔄</span> <span class="au-t">تحديث</span>'; b.onclick = apply; const lg = top.querySelector(".logout"); lg ? top.insertBefore(b, lg) : top.appendChild(b); const c = document.createElement("button"); c.id = "au-cc"; c.type = "button"; c.className = "small gray"; c.title = "مسح كاش المتصفح لهذا الموقع وإعادة تحميل الصفحة"; c.innerHTML = "🧹 مسح الكاش"; c.onclick = clearCache; b.after(c); paint(); };
@@ -108,5 +117,5 @@ const AdminUpdate = (() => {
     hookRestore(); add(); setInterval(add, 1500); check(false); setInterval(() => check(false), 5 * 60 * 1000); document.addEventListener("visibilitychange", () => { if (!document.hidden) check(false); });
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { check, apply, clearCache, paint, showCover, get current() { return cur; }, get latest() { return latest; } };
+  return { early, check, apply, clearCache, paint, showCover, get current() { return cur; }, get latest() { return latest; } };
 })();
