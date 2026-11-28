@@ -128,7 +128,7 @@ html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.
 #tab-orders #ord-chiprow #op-views{display:contents}
 #tab-orders #ord-chiprow #op-bulk{display:none}
 /* شريط الإجراءات الجماعية (تأكيد/إرسال المحدد للشركة/نسخ الأرقام…): يظهر عند تحديد طلب ويبقى أسفل الشاشة */
-#tab-orders #ord-chiprow #op-bulk.on{display:flex!important;position:fixed;left:10px;right:10px;bottom:12px;z-index:9000;max-height:46vh;overflow:auto;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.7rem;border-radius:18px}
+#tab-orders #ord-chiprow #op-bulk.on{display:flex!important;position:fixed;left:10px;right:10px;bottom:12px;z-index:60;max-height:46vh;overflow:auto;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.7rem;border-radius:18px}
 #tab-orders #ord-chiprow #op-bulk.on .opb{display:inline-flex!important}
 html.white #tab-orders #ord-chiprow #op-bulk.on{background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.1);box-shadow:0 12px 34px rgba(16,24,40,.22)}
 html.white #tab-orders #ord-chiprow #op-bulk.on b{color:#0f172a}
