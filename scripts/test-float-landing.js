@@ -2,7 +2,7 @@
 const { chromium } = require("playwright");
 (async () => {
   const b = await chromium.launch(); let bad = 0; const t = (n, ok, x) => { console.log((ok ? "✓ " : "✗ ") + n + (ok ? "" : " " + JSON.stringify(x))); if (!ok) bad++; };
-  const base = "http://localhost:" + (process.env.PORT || 8765);
+  const base = "http://localhost:" + (process.env.PORT || 8765), STORE = String(JSON.parse(require("fs").readFileSync(__dirname + "/../assets/data/store.json", "utf8")).wa || "").replace(/\D/g, "");
   const cfg = JSON.stringify({ v: 1, wa: { on: true, device: "all", pages: { home: true, product: true, shop: true, other: true }, only: ["tarkiz"], scopeMode: "only", number: "" }, tel: { on: false }, msgr: { on: false } });
   for (const path of ["/tarkiz/", "/lp/tarkiz/", "/produit/tarkiz/"]) {
     const c = await b.newContext({ serviceWorkers: "block", viewport: { width: 412, height: 800 } }), p = await c.newPage();
@@ -10,7 +10,7 @@ const { chromium } = require("playwright");
     await p.route(/assets\/data\/float-icons\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: cfg }));
     await p.goto(base + path, { waitUntil: "load" }); await p.waitForTimeout(3500);
     const r = await p.evaluate(() => { const a = document.querySelector('.fli[data-k="wa"]'); return a ? { href: a.getAttribute("href"), vis: a.getBoundingClientRect().width > 0 } : null; });
-    t(path + ": أيقونة واتساب ظاهرة برابط wa.me", !!r && r.vis && /wa\.me\/213/.test(r.href), r);
+    t(path + ": أيقونة واتساب ظاهرة برابط wa.me برقم المتجر المسجَّل (" + STORE + ")", !!r && r.vis && STORE.length > 8 && r.href.indexOf("wa.me/" + STORE) >= 0, r);
     await c.close();
   }
   { const c = await b.newContext({ serviceWorkers: "block" }), p = await c.newPage(); const errs = [];

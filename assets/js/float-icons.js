@@ -32,7 +32,8 @@ window.FloatIcons = (function () {
     return d;
   }
   function telHref(n) { const d = String(n || "").replace(/[^\d+]/g, ""); if (!d) return ""; if (d.startsWith("+")) return "tel:" + d; if (d.startsWith("213")) return "tel:+" + d; if (d.startsWith("0") && d.length >= 9) return "tel:+213" + d.slice(1); return "tel:" + d; }
-  function waNum(c) { const g = String(c.number || "").replace(/\D/g, ""); if (g) return g.startsWith("0") ? "213" + g.slice(1) : g; return (typeof WA_NUMBER !== "undefined" && WA_NUMBER) || ((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || ""); }
+  let STORE_WA = "";      /* رقم واتساب المتجر المسجَّل (assets/data/store.json ← إعدادات الموقع): الافتراضي حين يُترك رقم الأيقونة فارغاً، وبه تعمل صفحات الهبوط التي لا تحمّل app.js */
+  function waNum(c) { const g = String(c.number || "").replace(/\D/g, ""); if (g) return g.startsWith("0") ? "213" + g.slice(1) : g; return STORE_WA || (typeof WA_NUMBER !== "undefined" && WA_NUMBER) || ((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || ""); }
   function href(k, c) {
     if (k === "wa") { const n = waNum(c); return n ? "https://wa.me/" + n + (c.msg ? "?text=" + encodeURIComponent(c.msg) : "") : ""; }
     if (k === "tel") return telHref(c.number);
@@ -74,6 +75,7 @@ window.FloatIcons = (function () {
       let off = []; try { const r = await fetch(rel + "assets/data/apps.json", { cache: "no-store" }); if (r.ok) off = (await r.json()).off || []; } catch (e) { }
       if (off.indexOf("floaters") >= 0) return;
       let cfg = null; try { const r = await fetch(rel + "assets/data/float-icons.json", { cache: "no-store" }); if (r.ok) cfg = await r.json(); } catch (e) { }
+      try { const r = await fetch(rel + "assets/data/store.json", { cache: "no-store" }); if (r.ok) { const j = await r.json(); STORE_WA = String((j && j.wa) || "").replace(/\D/g, ""); } } catch (e) { }
       if (!cfg) return; cfg = norm(cfg); css(); const pt = pageType(), els = [];
       KEYS.forEach(k => {
         const c0 = cfg[k], ob = onlyOk(c0); if (!c0.on || !deviceOk(c0.device) || (ob === null || c0.scopeMode === "all" ? !c0.pages[pt] : !ob)) return;
