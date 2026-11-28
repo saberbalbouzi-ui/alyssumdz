@@ -28,7 +28,7 @@
     /* ٣) صف «شركات التوصيل» القابل للطيّ */
     const co = $("order-co-chips");
     if (co && !$("co-fold")) {
-      const f = document.createElement("button"); f.type = "button"; f.id = "co-fold"; f.innerHTML = '<span class="cf-t">🚚 <b>' + T("شركات التوصيل") + '</b> <i id="cf-n"></i></span><span class="cf-c">⌄</span>';
+      const f = document.createElement("button"); f.type = "button"; f.id = "co-fold"; f.innerHTML = '<span class="cf-t">🚚 <b>' + T("شركات التوصيل") + '</b> <i id="cf-n"></i></span><span class="cf-c"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>';
       f.onclick = () => { co.classList.toggle("co-open"); f.classList.toggle("open", co.classList.contains("co-open")); }; co.before(f);
     }
     if (co && $("co-fold")) { const n = Math.max(0, co.querySelectorAll("button").length - 1), vis = n > 0 && !co.hasAttribute("hidden") && co.style.display !== "none" || (n > 0 && co.dataset.noco === undefined); $("co-fold").style.display = n > 0 ? "" : "none"; const c = $("cf-n"); if (c && c.textContent !== String(n)) c.textContent = n; }

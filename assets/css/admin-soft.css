@@ -162,3 +162,9 @@ html:not(.white) body #tab-orders .of-more .fl-reset:not(#_){background:rgba(248
 html:not(.white) body #tab-orders .of-more .fl-imp:not(#_){background:rgba(226,254,23,.12)!important;color:#e2fe17!important;border:1px solid rgba(226,254,23,.35)!important;box-shadow:none!important;border-radius:14px!important}
 html:not(.white) body #tab-orders .of-more .fl-foot .fl-cancel:not(#_){background:rgba(255,255,255,.08)!important}
 html:not(.white) body #tab-orders .of-more button svg{stroke:currentColor!important;color:inherit!important}
+
+/* سهم صف «شركات التوصيل»: واضح ويدور عند الفتح */
+#tab-orders #co-fold .cf-c{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:rgba(16,24,40,.06);flex:none;transition:transform .2s}
+html:not(.white) #tab-orders #co-fold .cf-c{background:rgba(255,255,255,.12)}
+#tab-orders #co-fold .cf-c svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#tab-orders #co-fold.open .cf-c{transform:rotate(180deg)}
