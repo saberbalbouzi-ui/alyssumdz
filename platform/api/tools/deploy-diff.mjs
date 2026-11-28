@@ -12,7 +12,7 @@ export function parseMultipart(body, boundary) {
   }
   return out;
 }
-const norm = (b) => { const { name, type } = b; const r = { name, type }; for (const k of Object.keys(b).sort()) if (!["name", "type"].includes(k) && !/^(text|secret|value)$/.test(k) || (k === "text" && type === "plain_text")) r[k] = b[k]; return r; };
+const norm = (b) => { const { name, type } = b; const r = { name, type }; for (const k of Object.keys(b).sort()) if (!["name", "type"].includes(k) && !(k === "database_id" && b.id) && !/^(text|secret|value)$/.test(k) || (k === "text" && type === "plain_text")) r[k] = b[k]; return r; };
 const brief = (b) => b.type === "plain_text" ? `${b.name}=${/KEY|SECRET|TOKEN|PASS/i.test(b.name) ? "<مخفي>" : String(b.text).slice(0, 60)}` : b.type === "secret_text" ? `${b.name}(سر)` : `${b.name}:${b.type}`;
 
 /** يقارن الحالة المنشورة بالمحلية؛ يعيد {lines, risks, same}. لا يطبع قيم أسرار (plain_text بأسماء حساسة تُخفى). */
@@ -29,7 +29,7 @@ export function compare(local, remote) {
   const rs = (remote.schedules || []).map((s) => s.cron || s).sort().join("|"), ls = (local.schedules || []).sort().join("|");
   if (rs !== ls) { lines.push(`cron: [${rs || "لا شيء"}] ← [${ls}]`); if (rs) risks.push("الجدولة المنشورة ستُستبدل — --keep-existing لا يمسّها"); }
   const rf = remote.files || {}, lf = local.files || {}, fl = [];
-  for (const f of Object.keys(lf)) { if (!(f in rf)) fl.push("+ " + f); else if (sha8(rf[f]) !== sha8(lf[f])) fl.push("~ " + f); }
+  for (const f of Object.keys(lf)) { if (!(f in rf)) fl.push("+ " + f); else if (sha8(rf[f].trimEnd()) !== sha8(lf[f].trimEnd())) fl.push("~ " + f); }
   for (const f of Object.keys(rf)) if (!(f in lf)) fl.push("− " + f);
   if (remote.files) { lines.push(fl.length ? `ملفات الكود (${fl.length} فرق):\n   ` + fl.join("\n   ") : "ملفات الكود: مطابقة تماماً"); if (fl.some((x) => x[0] !== "+" || !/laura/i.test(x))) risks.push("فروق كود خارج LAURA: النشر يرسل الـWorker كاملاً — راجعها قبل الرفع"); }
   else lines.push("ملفات الكود: لم يمكن جلبها (قارنها يدوياً)");
@@ -45,4 +45,15 @@ export function mergeMeta(meta, remote) {
   if (remote.compatibility_date) out.compatibility_date = remote.compatibility_date;
   if (remote.compatibility_flags?.length) out.compatibility_flags = remote.compatibility_flags;
   return out;
+}
+
+/** بيانات الإصدار في pf_meta: لا إنشاء للجدول ولا هجرة. q(sql, params) مُحقَن. يعيد {written, warning?}. غياب الجدول ليس فشلاً (الإنتاج قد لا يملكه). */
+async function hasPfMeta(q, id) { const r = await q(id, "SELECT name FROM sqlite_master WHERE type='table' AND name='pf_meta'"); return !!r?.[0]?.results?.length; }
+export async function writeReleaseSha(q, id, sha, now) {
+  if (!(await hasPfMeta(q, id))) return { written: false, warning: "جدول pf_meta غير موجود في D1 — تخطّيتُ تسجيل release_sha (لم يُنشأ الجدول ولا هجرة؛ الـWorker نفسه نُشر)" };
+  await q(id, "INSERT INTO pf_meta (k,v,at) VALUES ('release_sha',?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at", [sha, now]); return { written: true };
+}
+export async function readReleaseMeta(q, id) {
+  if (!(await hasPfMeta(q, id))) return { available: false, rows: [] };
+  const r = await q(id, "SELECT k,v FROM pf_meta WHERE k IN ('environment','schema_hash','release_sha','rollback_to')"); return { available: true, rows: r?.[0]?.results ?? [] };
 }
