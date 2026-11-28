@@ -27,3 +27,5 @@ const p = parseMultipart(body, b);
 t("multipart parse", p["index.js"] === "export default 1;" && p["modules/m.js"] === "line1\nline2");
 t("sha8", sha8("a") === sha8("a") && sha8("a") !== sha8("b"));
 console.log(bad ? `✗ ${bad} فشل / ${ok} نجح` : `✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
+// ملف يختلف بسطر نهائي فقط (الرد البعيد يُقصّ) لا يُعدّ فرقاً
+{ const r = compare({ bindings: [], files: { "a.js": "x\n" } }, { bindings: [], files: { "a.js": "x" }, schedules: [] }); if (r.lines.some((l) => /فرق/.test(l))) { console.error("FAIL trailing newline"); process.exit(1); } console.log("ok trailing-newline"); }

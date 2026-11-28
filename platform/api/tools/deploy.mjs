@@ -61,7 +61,8 @@ function localState() {
 }
 async function stepDiff() {
   const r = await readRemote(); if (!r) { console.log("لا Worker منشور بهذا الاسم (أو وضع dry-run) — لا شيء للمقارنة"); return; }
-  const c = compare(localState(), r); console.log("— مقارنة " + NAME + " (المنشور ← المحلي) —"); for (const l of c.lines) console.log(" ·", l);
+  const L = localState(), did = await dbId().catch(() => null), db = did && L.bindings.find((b) => b.type === "d1"); if (db) db.id = did;   // معرّف D1 الحقيقي (قراءة) كي لا يظهر فرق وهمي
+  const c = compare(L, r); console.log("— مقارنة " + NAME + " (المنشور ← المحلي) —"); for (const l of c.lines) console.log(" ·", l);
   console.log(c.risks.length ? "\nمخاطر:\n" + c.risks.map((x) => " ⚠ " + x).join("\n") : "\nلا مخاطر مرصودة"); console.log(c.same ? "النتيجة: مطابق" : "النتيجة: توجد فروق — راجعها قبل worker");
 }
 function workerMeta(id) { const S = sha(), V = version(); return { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ type: "d1", name: "DB", id }, { type: "plain_text", name: "PUBLIC_URL", text: plan.publicUrl }, { type: "plain_text", name: "ENVIRONMENT", text: plan.env }, { type: "plain_text", name: "GIT_SHA", text: S }, { type: "plain_text", name: "APP_VERSION", text: V }, { type: "plain_text", name: "SCHEMA_HASH", text: SCHEMA_HASH }], keep_bindings: ["secret_text"] }; }
