@@ -37,7 +37,7 @@ Cloudflare Worker  /v1/laura/{chat,confirm,tools,health}   (platform/api/src/mod
 |---|---|---|
 | Worker (أسرار) | `LAURA_LLM_KEY`، `LAURA_ACTOR_SECRET` (≥16 حرفاً) | اختياري: `LAURA_MODEL`، `LAURA_LLM_ENDPOINT`، `LAURA_TIMEOUT_MS` |
 | Worker (D1) | تطبيق الهجرة `migrations/0002_laura.sql` (جدولا `lr_pending` و`lr_conv`) | إضافية فقط (CREATE IF NOT EXISTS)؛ مُختبَرة محلياً (`migrations.test` + workerd) ولم تُطبَّق على أي قاعدة حية |
-| Worker (مفتاح الموقع) | النطاق `laura:chat` + نطاقات الأدوات المطلوبة فقط: قراءة `orders:read` `catalog:read` `carts:read` `payments:read` `wallet:read` `sms:read` `ads:read` `sources:read` `digital:read` `appstore:read` `marketplace:read` `agency:read`؛ وكتابة (بموافقة) `orders:write` `carts:write` `payments:write` `wallet:write` `ads:write` | الأدوات تُصفّى بنطاقات المفتاح ∧ صلاحيات المستخدم؛ أي نطاق لا يُمنح تختفي أداته |
+| Worker (مفتاح الموقع) | **مفتاح مخصّص لـLAURA** (لا `*`): النطاق `laura:chat` + نطاقات القراءة الأربعة عشر `laura:chat` `orders:read` `catalog:read` `carts:read` `payments:read` `wallet:read` `sms:read` `ads:read` `sources:read` `digital:read` `appstore:read` `marketplace:read` `agency:read` `modules:read`؛ ولا نطاق كتابة في مرحلة القراءة. الكتابة لاحقاً بنطاقات :write المفصّلة أدناه | الأدوات تُصفّى بنطاقات المفتاح ∧ صلاحيات المستخدم؛ أي نطاق لا يُمنح تختفي أداته. الإصدار: `node platform/api/tools/laura-issue-key.mjs --tenant <رقم>` (dry-run افتراضياً) |
 | Supabase (أسرار الدالة) | `LAURA_ACTOR_SECRET` (نفس قيمة الـWorker)، `PLATFORM_TENANT_ID` | ثم نشر `platform-proxy` |
 ## التشغيل المحلي
 - اختبارات الوحدة/التكامل (بلا شبكة): `node platform/api/test/laura.test.mjs` · `laura-proxy.test.mjs`.
@@ -93,3 +93,19 @@ Cloudflare Worker  /v1/laura/{chat,confirm,tools,health}   (platform/api/src/mod
 | `payment_method_set {method, on?, rip?, account?, key?, name?}` (مالك، حساسة) | تفعيل/إيقاف طريقة وضبط بياناتها؛ يُدمج الحقل المطلوب دون مسّ الطرق الأخرى | قراءة `assets/data/pay-methods.json` ثم `GH.putFile` (كما تفعل نافذة «المنتجات الرقمية») | قراءة الملف المنشور: الحقول المطلوبة (`store_file`) |
 **حمايات:** الأرقام تُقبل أرقاماً تفصلها مسافة مفردة فقط ومفتاح CCP رقمان؛ لا تفعيل BaridiMob بلا RIP ولا CCP بلا حساب (`missing_rip`/`missing_account` على الخادم وفي اللوحة)؛ بطاقة الموافقة تعرض الرقم القديم والجديد كاملين مع تنبيه أن الزبائن سيحوّلون المال إلى الحساب الجديد؛ `editor_open` إن كانت نافذة «المنتجات الرقمية» مفتوحة (تحفظ نموذجها كاملاً فلا ننافسها). بعد النجاح تُحدَّث ذاكرة تلك النافذة من الملف. **حدود:** لا تغيّر الاشتراك ببوابة Chargily نفسها (مفاتيحها لدى المنصة) بل مجرد إظهارها للزبون؛ لم تُجرَّب مع بوابة دفع حقيقية.
 **حمايات:** يُرفض التعديل بـ`company_pricing` إن كان التسعير من شركة توصيل مفعّلة (تعديل المناطق لا يغيّر ما يدفعه الزبون)، و`editor_open` إن كانت في اللوحة رسوم غير محفوظة، و`unsupported` إن لم تكن وحدة المناطق قد غلّفت النشر (نشر `wilayas.js` الأصلي كان سيُسقط `SHIPPING`). اختبار: `laura-shipping-ui.js` (22 فحصاً على متجر PHP حقيقي).
+
+## نطاقات الكتابة (قاعدة ثابتة)
+لكل أداة كتابة نطاق `:write` خاص بها؛ **لا أداة كتابة بنطاق `:read` ولا `laura:chat`** — وهذا ثابت يُفحَص عند تحميل الوحدة (يفشل الإقلاع إن خُرق) وباختبار `test/laura-scopes.test.mjs`. فمفتاح قراءة/محادثة لا يجتاز بوابة النطاق إلى كتابة.
+
+| النطاق | أدوات الكتابة |
+|---|---|
+| `events:write` | `order_confirm` `order_cancel` |
+| `payments:write` | `payment_approve` `payment_reject` |
+| `carts:write` | `cart_set_status` |
+| `wallet:write` | `withdrawal_cancel` |
+| `ads:write` | `ads_sync_toggle` |
+| `catalog:write` | `product_set_stock` `product_set_price` `product_set_free_shipping` (تنفّذها لوحة التحكم exec:client) |
+| `laura:write` | `maintenance_set` `announcement_set` `shipping_fee_set` `shipping_zone_set` `payment_method_set` (تنفّذها لوحة التحكم exec:client؛ نطاق مخصّص لا يمنح أي مسار كتالوج) |
+
+شروط مستقلة كلها لازمة لأي كتابة: (1) نطاق `:write` في المفتاح، (2) صلاحية المستخدم (`perm`)، (3) `LAURA_WRITES=on` على الـWorker (غيابه = لا تُعرض ولا تُنفَّذ ولا يُعتمد معلّق قديم)، (4) موافقة صريحة من المستخدم، ثم تحقّق من النتيجة. يُفحَص النطاق عند العرض وعند التأكيد (سحب النطاق بعد إنشاء المعلّق يُبطل التأكيد 403).
+**تنبيه:** `catalog:write` يسمح أيضاً لمفتاح الموقع بمسارات `PUT /v1/catalog/*` مباشرة؛ فلا يُمنح لمفتاح LAURA إلا عند فتح الكتابة وبقرار صريح.

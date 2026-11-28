@@ -31,7 +31,7 @@
 - «إدارة المنصة» (منتجات/مخزون/إعدادات) لم تُضَف: تحتاج مساراً حقيقياً ومراجعة لكل أداة.
 
 ## خطوات النشر المقترحة (تحتاج موافقتك الجديدة)
-1. تطبيق `0002_laura.sql` على D1 (إضافية). 2. أسرار Worker: `LAURA_LLM_KEY`، `LAURA_ACTOR_SECRET`. 3. إضافة نطاقات `laura:chat` وأدوات القراءة/الكتابة إلى `PLATFORM_KEY`. 4. أسرار `platform-proxy`: `LAURA_ACTOR_SECRET`، `PLATFORM_TENANT_ID` ثم نشر الدالة. 5. نشر Worker. 6. تشغيل `laura-live-check.mjs` بمفتاح حقيقي قبل الفتح للمستخدمين. 7. قرار `contract` للمنصة (إضافي).
+1. تطبيق `0002_laura.sql` على D1 (إضافية). 2. أسرار Worker: `LAURA_LLM_KEY`، `LAURA_ACTOR_SECRET`. 3. إصدار مفتاح قراءة مخصّص (`tools/laura-issue-key.mjs`) بدل تعديل `PLATFORM_KEY` — نطاقات الكتابة لاحقاً (انظر laura.md). 4. أسرار `platform-proxy`: `LAURA_ACTOR_SECRET`، `PLATFORM_TENANT_ID` ثم نشر الدالة. 5. نشر Worker. 6. تشغيل `laura-live-check.mjs` بمفتاح حقيقي قبل الفتح للمستخدمين. 7. قرار `contract` للمنصة (إضافي).
 ## ملاحظة Git
 فرع التطوير المخصص `claude/charming-ramanujan-j9ikd8` على الخادم له تاريخ منفصل (50 التزاماً من عمل Beta بلا أصل مشترك مع main) فلا يمكن الدمج فيه بلا إعادة كتابته؛ لذلك بقي العمل **التزامات محلية** على `laura-dev` ولم يُدفع شيء.
 
