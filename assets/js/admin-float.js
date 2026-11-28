@@ -100,7 +100,7 @@ const AdminFloat = (() => {
   }
   async function mount(host) {
     if (!host) return; host.id = "fl-host"; host.innerHTML = '<div class="hint">جارٍ التحميل…</div>';
-    const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=bd646615"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
+    const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=6f6e6501"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
     await need(); if (!window.FloatIcons) { host.innerHTML = '<div class="hint">تعذّر تحميل الأيقونات</div>'; return; }
     if (!S.loaded) await load();
     try { const r = await fetch("assets/data/store.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); S.storeWa = (j && j.wa) || ""; } } catch (e) { }

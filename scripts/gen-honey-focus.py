@@ -12,7 +12,7 @@ exec(compile(_src.split("GREEN, BLUE, GOLD, RED")[0].replace("R = random.Random(
 
 NAVY, ORANGE, GREEN, RED, MUTED = "#123e72", "#f39a18", "#187a3b", "#d8322a", "#627487"
 P = "/assets/img/tarkiz/"; PG = "/assets/img/pages/"
-WA = "https://wa.me/213559237239"
+WA = "https://wa.me/213541138189"
 def X(w, **kw): w["set"].update(kw); return w
 def cls(w, c): w["set"]["cls"] = c; return w
 def HT(html, c="", pos=False, **kw):      # عنصر HTML مخصص (كود قابل للتعديل): الصنف داخل الكود، وعلى الغلاف فقط للعناصر المطلقة المواضع

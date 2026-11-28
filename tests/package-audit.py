@@ -18,7 +18,7 @@ PLATFORM_TOOLS = {"assets/ext/alyssum-clone-helper.zip"}
 PK = {"install": ("dist/_pa_base", []), "update": ("dist/_pa_upd", ["--update"]), "remote": ("dist/_pa_rem", ["--update", "--remote"])}
 sh = json.load(open("shared-files.json", encoding="utf-8")); shared = set(sh["shared"]); own = sh["owner_only"]
 data = open("assets/js/data.js", encoding="utf-8").read(); slugs = [s for s in re.findall(r'"slug":"([^"]+)"', data) if s not in ("demo", "test")]
-STRICT = [r"0559\s?23\s?72\s?39", r"213559237239", r"(?<!\d)0559(?!\d)", r"alyssumdz", r"saberbalbouzi", r"balbouzi", r"qvdaiundlkfbmjlummni", r"أليسوم", r"ألي<span", r"ALYSSUM", r"AKfycb", r"sb_publishable", r"ADMIN-2026", r"focus-honey", r"s-alyssum", r"alyssum[-_]"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs]
+STRICT = [r"0559\s?23\s?72\s?39", r"213559237239", r"0541\s?13\s?81\s?89", r"213541138189", r"(?<!\d)0559(?!\d)", r"alyssumdz", r"saberbalbouzi", r"balbouzi", r"qvdaiundlkfbmjlummni", r"أليسوم", r"ألي<span", r"ALYSSUM", r"AKfycb", r"sb_publishable", r"ADMIN-2026", r"focus-honey", r"s-alyssum", r"alyssum[-_]"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs]
 ALLOWED = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+", re.I)
 sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', open("assets/js/config.js", encoding="utf-8").read()); SK = sk.group(1) if sk else None
 TEXT = {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt", ".php", ".webmanifest", ".xml", ".pem"}

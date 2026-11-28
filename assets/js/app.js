@@ -1,7 +1,7 @@
 /* أليسوم — محرك الطلبات والسلة */
 /* صفحات منتجات قديمة تحمل @font-face بمسار جذري /assets/fonts/ فيفشل تحميل خط Cairo عند تثبيت المتجر داخل مجلد فرعي (/store/…): يُصحَّح المسار هنا نسبةً إلى موقع هذا السكربت فيصلح في أي مجلد تثبيت بلا إعادة توليد الصفحات. لا أثر على التثبيت في الجذر (المسار الصحيح يبقى كما هو). */
 (function(){ try{ var st=document.getElementById("cairo-local"), sc=document.currentScript; if(!st||!sc||!sc.src||!/url\(\/assets\/fonts\//.test(st.textContent)) return; var base=new URL("../fonts/", sc.src).pathname; if(base==="/assets/fonts/") return; st.textContent=st.textContent.replace(/url\(\/assets\/fonts\//g,"url("+base); }catch(e){} })();
-let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "213559237239"; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
+let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || ""; // يمكن استبداله ديناميكياً عبر assets/data/checkout.json (راجع initCheckout أدناه)
 /* الشحن المجاني: خاصية المنتج freeShip، ويمكن حصره في عروض بعينها (offer.ship)؛ بلا عروض محددة يشمل كل العروض */
 function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; if(productType(p)==="grouped") return true; const flagged = (p.offers||[]).some(x=>x.ship); return flagged ? !!(o && o.ship) : true; }
 function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }

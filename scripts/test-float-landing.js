@@ -9,8 +9,8 @@ const { chromium } = require("playwright");
     await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|supabase\.co|google|facebook|tiktok/, r => r.abort());
     await p.route(/assets\/data\/float-icons\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: cfg }));
     await p.goto(base + path, { waitUntil: "load" }); await p.waitForTimeout(3500);
-    const r = await p.evaluate(() => { const a = document.querySelector('.fli[data-k="wa"]'); return a ? { href: a.getAttribute("href"), vis: a.getBoundingClientRect().width > 0 } : null; });
-    t(path + ": أيقونة واتساب ظاهرة برابط wa.me برقم المتجر المسجَّل (" + STORE + ")", !!r && r.vis && STORE.length > 8 && r.href.indexOf("wa.me/" + STORE) >= 0, r);
+    const r = await p.evaluate(() => { const a = document.querySelector('.fli[data-k="wa"]'); return a ? { href: a.getAttribute("href"), vis: a.getBoundingClientRect().width > 0, d: ((a.querySelector("svg path") || {}).getAttribute || (() => "")).call(a.querySelector("svg path") || {}, "d") } : null; });
+    t(path + ": أيقونة واتساب ظاهرة برابط wa.me برقم المتجر المسجَّل (" + STORE + ")", !!r && r.vis && STORE.length > 8 && r.href.indexOf("wa.me/" + STORE) >= 0 && /^M17\.472 14\.382/.test(r.d || ""), r);      // شعار واتساب الحقيقي (هاتف داخل فقاعة) لا سماعة الهاتف
     await c.close();
   }
   { const c = await b.newContext({ serviceWorkers: "block" }), p = await c.newPage(); const errs = [];

@@ -23,7 +23,7 @@ head = head.replace("alyssum-premium-overrides", "premium-overrides")
 # ── أعلى الصفحة حتى نهاية قسم المنتج (hero): نصوص محايدة
 top = rest[:rest.index('<section class="lp-sec alt">')]
 top = re.sub(r'<a class="logo" href="../../index.html">[^<]*<span>[^<]*</span></a>', '<a class="logo" href="../../index.html">{{SITE_NAME}}</a>', top)
-top = top.replace("213559237239", "{{WA}}").replace("كريمة%20ضد%20حب%20الشباب", "{{TITLE_URL}}").replace("كريمة ضد حب الشباب", "{{TITLE}}")
+top = top.replace("213541138189", "{{WA}}").replace("كريمة%20ضد%20حب%20الشباب", "{{TITLE_URL}}").replace("كريمة ضد حب الشباب", "{{TITLE}}")
 top = top.replace("anti-acne/presentation/anti-acne 003.webp", "placeholder/photo.svg")
 top = re.sub(r'<img id="gmain" src="[^"]*"', '<img id="gmain" src="../../assets/img/placeholder/photo.svg"', top)
 top = top.replace("ALYSSUM — العناية بالبشرة", "{{SITE_EN}} — {{CAT}}")
@@ -189,5 +189,5 @@ assert "معرض الصور" in foot
 foot = foot.replace('"anti-acne"', '"{{SLUG}}"')
 out = head + top + body + foot
 (root / "p/_template/index.html").write_text(out, encoding="utf-8")
-left = re.findall(r"alyssum|أليسوم|anti-acne|حب الشباب|213559237239", out, re.I)
+left = re.findall(r"alyssum|أليسوم|anti-acne|حب الشباب|213541138189", out, re.I)
 print("tokens:", sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", out))), "leftovers:", set(left), len(out))

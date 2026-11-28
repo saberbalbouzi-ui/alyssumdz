@@ -17,7 +17,7 @@ def COL(ws, w=100): return {"id": uid(), "set": {"w": dm(w, 100)}, "widgets": ws
 GREEN, NAVY, MUTED = "#187a3b", "#123e72", "#5d6f66"
 SB_URL = "https://qvdaiundlkfbmjlummni.supabase.co"
 SB_KEY = "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h"
-WA = "213559237239"
+WA = "213541138189"
 
 CSS_APP = r"""
 .rq{max-width:760px;margin:0 auto;font-family:'Cairo',sans-serif;color:#16324c;direction:rtl;line-height:1.7;box-sizing:border-box}

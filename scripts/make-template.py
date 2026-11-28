@@ -30,7 +30,7 @@ def _owner_only():
     return (lambda rel: any(fnmatch.fnmatch(rel, g) for g in pats)), set(d.get("template_ids", []))
 
 def _scrub_pairs(name, wa):
-    return [("0559 23 72 39", wa), ("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
+    return [("0559 23 72 39", wa), ("0541 13 81 89", wa), ("213541138189", "213550000000"), ("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
             ("213559237239", "213550000000"), ("anti-acne", "demo"), ("ALYSSUM DZ", name), ("ALYSSUM", name), ("أليسوم", name), ("alyssum", "store"), ("qvdaiundlkfbmjlummni", "YOUR_PROJECT_REF")]
 
 def _leak_scan(root_dir, slugs):
@@ -227,7 +227,7 @@ ag.write_text(t, encoding="utf-8")
 
 # إزالة أي أثر لهويتك من نصوص الشيفرة (مفاتيح التخزين، أمثلة، اسم العلامة…)
 NAME = a.name.replace('"', "'").replace("\\", "")
-SCRUB = [("0559 23 72 39", a.wa), ("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
+SCRUB = [("0559 23 72 39", a.wa), ("0541 13 81 89", a.wa), ("213541138189", "213550000000"), ("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
          ("213559237239", "213550000000"), ("anti-acne", "demo"), ("ALYSSUM DZ", NAME), ("ALYSSUM", NAME), ("أليسوم", NAME), ("alyssum", "store"), ("qvdaiundlkfbmjlummni", "YOUR_PROJECT_REF")]
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".css", ".sql", ".sh", ".py", ".webmanifest"} and f.name not in ("make-template.py",):
