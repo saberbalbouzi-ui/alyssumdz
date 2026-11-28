@@ -1816,7 +1816,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       const mv = (dx, dy, ev) => {
         let h = r.height + dy; const eb = Math.max(0, ...Array.from(el.querySelectorAll('[data-kind="widget"]')).map(q => { const b = layoutRect(q); return b.top + b.height - top; }));
         if (h < eb + 10) h = eb;      // لا يقصّ عنصراً: يتوقف عند حافة آخر عنصر بالضبط
-        const H = Math.max(100, Math.round(h * k)); setR(sec.set, "mh", dev, H); tip.textContent = H + "px"; renderCanvas(); positionOverlay();
+        const H = Math.max(24, Math.round(h * k)); setR(sec.set, "mh", dev, H); tip.textContent = H + "px";      /* كان الحدّ الأدنى 100px فيبقى فراغ كبير أسفل آخر عنصر ولا ينقص (الحدّ الحقيقي حافة آخر عنصر أعلاه) */ renderCanvas(); positionOverlay();
         const st = $("pbx-ovl").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
       };
       dragTrack(e, "ns-resize", mv, () => { E.nextLabel = "ضبط طول الصفحة"; afterEdit(); });

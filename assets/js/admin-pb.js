@@ -1254,6 +1254,8 @@ body:not(.pb-edit) .pb-w:has(>.pb-offw){display:none!important}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-page{margin:0;font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2420;line-height:1.6;-webkit-font-smoothing:antialiased}
 .pb-page img{max-width:100%}
+/* عنصر حرّ يتجاوز عرض الشاشة لا يوسّع نافذة العرض ولا يزيح الصفحة جانباً في متصفح ماسنجر/الهاتف (RTL كان يبدأ مزاحاً لليمين) */
+html:has(body.pb-page:not(.pb-edit)),body.pb-page:not(.pb-edit){overflow-x:clip}@supports not (overflow:clip){html:has(body.pb-page:not(.pb-edit)),body.pb-page:not(.pb-edit){overflow-x:hidden}}
 .pb-sec{position:relative;isolation:isolate}
 .pb-par{overflow:hidden}.pb-par .pb-im,.pb-par .pb-svg{transform:translate3d(0,var(--py,0px),0) scale(1.3);will-change:transform}
 .pb-sl-off,.pb-gx-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important}.pb-gx-m{transition:opacity .35s,visibility .35s,translate .3s}.pb-sl-m{transition:opacity .65s ease,visibility .65s,translate .75s cubic-bezier(.22,.61,.36,1)}.pb-sl-off.pb-sl-l{translate:-9% 0}.pb-sl-off.pb-sl-r{translate:9% 0}
@@ -3292,7 +3294,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       const mv = (dx, dy, ev) => {
         let h = r.height + dy; const eb = Math.max(0, ...Array.from(el.querySelectorAll('[data-kind="widget"]')).map(q => { const b = layoutRect(q); return b.top + b.height - top; }));
         if (h < eb + 10) h = eb;      // لا يقصّ عنصراً: يتوقف عند حافة آخر عنصر بالضبط
-        const H = Math.max(100, Math.round(h * k)); setR(sec.set, "mh", dev, H); tip.textContent = H + "px"; renderCanvas(); positionOverlay();
+        const H = Math.max(24, Math.round(h * k)); setR(sec.set, "mh", dev, H); tip.textContent = H + "px";      /* كان الحدّ الأدنى 100px فيبقى فراغ كبير أسفل آخر عنصر ولا ينقص (الحدّ الحقيقي حافة آخر عنصر أعلاه) */ renderCanvas(); positionOverlay();
         const st = $("pbx-ovl").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
       };
       dragTrack(e, "ns-resize", mv, () => { E.nextLabel = "ضبط طول الصفحة"; afterEdit(); });

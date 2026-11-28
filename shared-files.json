@@ -244,6 +244,7 @@
     "assets/js/api.js",
     "assets/js/app.js",
     "assets/js/admin-orders-soft.js",
+    "assets/js/admin-shipped-soft.js",
     "assets/js/avatar-script.js",
     "assets/js/barcode-tool.js",
     "assets/js/box-designer.js",
