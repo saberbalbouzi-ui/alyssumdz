@@ -265,7 +265,7 @@ html:not(.white) #pk .pk-ab .pk-mark{background:rgba(255,255,255,.08);color:inhe
 #pk svg.pk-ill2{order:0}
 
 /* ── الطلبات المسجلة (#sh-soft) حسب التصميم ── */
-#tab-shipped.sh-soft-on{display:flex;flex-direction:column;gap:.8rem}
+#tab-shipped.sh-soft-on:not(.hidden){display:flex;flex-direction:column;gap:.8rem}
 #tab-shipped.sh-soft-on>#sh-soft{order:-10}
 #tab-shipped.sh-soft-on:not(.sh-adv-on)>*:not(#sh-soft){display:none!important}
 #tab-shipped.sh-adv-on>*:not(#sh-soft):not(.arch-bar){order:5}
