@@ -1968,8 +1968,26 @@ body{overflow-x:hidden;margin:0}`;
   }
   function hist(on) { const box = $("pbx-hist"); if (!box) return; E.histOpen = on === undefined ? !E.histOpen : !!on; box.style.display = E.histOpen ? "flex" : "none"; if (E.histOpen) { renderHist(); const l = box.querySelector(".pbx-hl2"); if (l) l.scrollTop = 0; } }
   function histGo(i) { const en = (E.log || [])[i]; if (!en) return; E.page = JSON.parse(en.snap); E.nextLabel = "رجوع إلى المرحلة " + (i + 1) + ": " + en.label; E.dirty = true; if (E.sel && !find(E.sel)) E.sel = null; commitHist(); afterHist(); toast("↩ رُجع إلى المرحلة " + (i + 1) + " — «" + en.label + "» (يمكنك التراجع عن هذا الرجوع أيضاً)"); }
-  function undo() { if (E.hi <= 0) return; E.hi--; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
-  function redo() { if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
+  function flushHist() { try { clearTimeout(hT); } catch (e) { } if (E.hist && E.hist[E.hi] != null && E.page && JSON.stringify(E.page) !== E.hist[E.hi]) commitHist(); }      /* تعديل ينتظر نقطة التسجيل المؤجَّلة يصير مرحلة قبل التراجع، فلا يُبتلع مع ما قبله */
+  function undo() { flushHist(); if (E.hi <= 0) return; E.hi--; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
+  function redo() { flushHist(); if (E.hi >= E.hist.length - 1) return; E.hi++; E.page = JSON.parse(E.hist[E.hi]); E.dirty = true; afterHist(); }
+  /* حفظ/استرجاع سجلّ التراجع عبر إعادة تحميل الصفحة (التحديث التلقائي/اليدوي): وإلا بدأ السجلّ من جديد فلا يبقى للتراجع إلا ما بعد الفتح */
+  function histExport() {
+    try {
+      if (!E.hist || !E.hist.length) return null; let budget = 1800000, lo = E.hi, hi = E.hi; budget -= E.hist[E.hi].length;
+      while (lo > 0 && E.hi - lo < 40 && budget - E.hist[lo - 1].length > 0) { lo--; budget -= E.hist[lo].length; }
+      while (hi < E.hist.length - 1 && hi - E.hi < 10 && budget - E.hist[hi + 1].length > 0) { hi++; budget -= E.hist[hi].length; }
+      return { h: E.hist.slice(lo, hi + 1), hi: E.hi - lo };
+    } catch (e) { return null; }
+  }
+  function histImport(x) {
+    try {
+      if (!x || !Array.isArray(x.h) || !x.h.length || !E.page) return false; const h = x.h.filter(v => typeof v === "string"); if (h.length !== x.h.length) return false;
+      let hi = Math.min(Math.max(0, x.hi | 0), h.length - 1); const cur = JSON.stringify(E.page);
+      if (h[hi] !== cur) { h.splice(hi + 1, h.length, cur); hi = h.length - 1; }      /* الصفحة المستعادة تختلف عن آخر نقطة: تُضاف نقطة جديدة وتُزال الإعادة */
+      E.hist = h; E.hi = hi; updateTop(); return true;
+    } catch (e) { return false; }
+  }
   function afterHist() { E.mwp = null; if (E.sel && !find(E.sel)) E.sel = null; renderCanvas(); renderInspector(); renderLeft(); updateTop(); drawQbarSoon(); }
   const draftKey = () => "pb_draft_" + (E.slug || "new");
   function saveDraftNow() { saveDraft(); }
@@ -5735,7 +5753,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); pb.end(false, err.message || "تعذّر الحفظ"); toast("❌ " + err.message); } finally { E.pubBusy = false; }
   }
 
-  return { ask: pbAsk, askText: pbPrompt, view360Session, convertAllFree: () => convertAllFree(), togglePanels, mm, organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { histExport, histImport, ask: pbAsk, askText: pbPrompt, view360Session, convertAllFree: () => convertAllFree(), togglePanels, mm, organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

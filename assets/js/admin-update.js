@@ -32,6 +32,7 @@ const AdminUpdate = (() => {
       const st = { t: Date.now(), tab: "", pb: null }, on = document.querySelector(".nav-btn.on"), m = on && /Admin\.tab\('([^']+)'/.exec(on.getAttribute("onclick") || ""); if (m) st.tab = m[1];
       const app = document.getElementById("pb-app");
       if (typeof PBApp !== "undefined" && app && app.classList.contains("on") && PBApp.E && PBApp.E.page) { const E = PBApp.E; st.pb = { page: E.page, slug: E.slug || "", isNew: !!E.isNew, dirty: !!E.dirty, dev: E.dev, sel: E.sel, ltab: E.ltab }; PBApp.saveDraftNow && PBApp.saveDraftNow(); }
+      try { sessionStorage.removeItem("au_hist"); if (st.pb && PBApp.histExport) { const hx = PBApp.histExport(); if (hx) sessionStorage.setItem("au_hist", JSON.stringify(hx)); } } catch (e) { try { sessionStorage.removeItem("au_hist"); } catch (x) { } }      // سجلّ التراجع يعود بعد إعادة التحميل
       try { sessionStorage.setItem("au_state", JSON.stringify(st)); }
       catch (e) { if (st.pb) { const p = st.pb.page; st.pb.page = null; st.pb.slim = true; try { PBApp.saveDraftNow && PBApp.saveDraftNow(); } catch (x) { } sessionStorage.setItem("au_state", JSON.stringify(st)); st.pb.page = p; } else throw e; }      // صفحة كبيرة لا تتّسع لمخزن الجلسة: تُحفظ مسودتها في المتصفح وتُستعاد منها
     } catch (e) { try { sessionStorage.removeItem("au_state"); } catch (x) { } }
@@ -49,7 +50,7 @@ const AdminUpdate = (() => {
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { }
     try { if (st.tab && typeof Admin !== "undefined") { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + st.tab + "'")); if (b) Admin.tab(st.tab, b); } } catch (e) { }
     try { if (st.pb && st.pb.slim && !st.pb.page) { let d = null; try { d = JSON.parse(localStorage.getItem("pb_draft_" + (st.pb.slug || "new")) || "null"); } catch (e) { } if (d) st.pb.page = d; else if (st.pb.slug && typeof PBAdmin !== "undefined") { PBAdmin.edit(st.pb.slug); st.pb = null; } }
-      if (st.pb && st.pb.page && typeof PBApp !== "undefined") { PBApp.open(st.pb.page, st.pb.slug, st.pb.isNew); const E = PBApp.E; E.dirty = st.pb.dirty; if (st.pb.dev && st.pb.dev !== "d") PBApp.setDev(st.pb.dev); if (st.pb.sel && E.page) { setTimeout(() => { try { if (PBApp.find(st.pb.sel)) { E.sel = st.pb.sel; PBApp.renderCanvas(); } } catch (e) { } }, 400); } } } catch (e) { console.warn(e); }
+      if (st.pb && st.pb.page && typeof PBApp !== "undefined") { PBApp.open(st.pb.page, st.pb.slug, st.pb.isNew); const E = PBApp.E; try { const hx = JSON.parse(sessionStorage.getItem("au_hist") || "null"); sessionStorage.removeItem("au_hist"); if (hx && PBApp.histImport) PBApp.histImport(hx); } catch (e) { } E.dirty = st.pb.dirty; if (st.pb.dev && st.pb.dev !== "d") PBApp.setDev(st.pb.dev); if (st.pb.sel && E.page) { setTimeout(() => { try { if (PBApp.find(st.pb.sel)) { E.sel = st.pb.sel; PBApp.renderCanvas(); } } catch (e) { } }, 400); } } } catch (e) { console.warn(e); }
     try { const c = document.getElementById("au-cover"); if (c) c.remove(); } catch (e) { }
     toast("✅ تم تحديث الصفحة");
   }
