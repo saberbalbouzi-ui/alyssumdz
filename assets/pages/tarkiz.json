@@ -5280,38 +5280,6 @@
      }
     }
    ]
-  },
-  {
-   "id": "ak07gju",
-   "set": {
-    "layout": "boxed",
-    "cw": {
-     "d": 1140
-    },
-    "pad": {
-     "d": [
-      0,
-      0,
-      0,
-      0
-     ]
-    },
-    "gap": {
-     "d": 20
-    },
-    "kind": "canvas",
-    "mh": {
-     "d": 100
-    }
-   },
-   "cols": [
-    {
-     "id": "5ynoszh",
-     "set": {},
-     "widgets": []
-    }
-   ],
-   "free": []
   }
  ],
  "seoTitle": "",

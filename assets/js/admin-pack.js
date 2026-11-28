@@ -4,7 +4,7 @@
 const AdminPack = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { rows: [], q: "", f: "todo", sel: {}, err: "", busy: false, host: null };
+  const S = { rows: [], q: "", f: "todo", wil: "", fopen: false, sel: {}, err: "", busy: false, host: null };
   const CO = { yalidine: "ياليدين", zr: "ZR Express", maystro: "Maystro", noest: "NOEST", ecotrack: "Ecotrack" };
   const ST = { confirmee: "مؤكَّد", expediee: "مُرسَل" };
 
@@ -121,13 +121,30 @@ const AdminPack = (() => {
     if (!r) st = "unknown"; else if (r.packed) st = "dup"; else { const n = await mark([r.id], false); st = n ? "ok" : "fail"; }
     S.last = { st, code: k, r, at: Date.now() }; beep(st === "ok"); draw(); const i = $("pk-scan"); if (i) i.focus();
   }
+  const PI = {
+    box: '<svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></svg>',
+    bar: '<svg viewBox="0 0 24 24"><path d="M4 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14"/></svg>',
+    cam: '<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+    info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>',
+    layers: '<svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5M3 17l9 5 9-5"/></svg>',
+    truck: '<svg viewBox="0 0 24 24"><path d="M2 6h11v9H2zM13 9h4l3 3v3h-7"/><circle cx="6.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/></svg>',
+    search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    flt: '<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>',
+    chk: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
+    tick: '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+    prn: '<svg viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><path d="M7 14h10v7H7z"/></svg>',
+    chv: '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+    reload: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 10-2.3 5.7M20 5v5h-5"/></svg>'
+  };
+  const ILL_INFO = '<svg class="pk-ill" viewBox="0 0 160 120" aria-hidden="true"><path d="M18 62l34-16 34 16v34L52 112 18 96z" fill="#d9a766"/><path d="M18 62l34 16 34-16-34-16z" fill="#ecc489"/><path d="M52 78v34L18 96V62z" fill="#c8924f"/><rect x="82" y="14" width="62" height="86" rx="8" fill="#5b7fa6"/><rect x="88" y="22" width="50" height="70" rx="5" fill="#fff"/><rect x="104" y="9" width="18" height="10" rx="4" fill="#3d5f86"/><path d="M95 34l3 3 6-7M95 52l3 3 6-7M95 70l3 3 6-7" stroke="#22a05a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M110 35h22M110 53h22M110 71h22" stroke="#c9d3df" stroke-width="3" stroke-linecap="round"/><path d="M30 86h20M30 92h14" stroke="#7a5a2a" stroke-width="3" stroke-linecap="round"/></svg>';
+  const ILL_EMPTY = '<svg class="pk-ill pk-ill2" viewBox="0 0 120 100" aria-hidden="true"><path d="M30 46l30-14 30 14v30L60 90 30 76z" fill="#fff" stroke="#c98a3d" stroke-width="3" stroke-linejoin="round"/><path d="M30 46l30 14 30-14M60 60v30" stroke="#c98a3d" stroke-width="3" fill="none" stroke-linejoin="round"/><path d="M30 46l-10-12 26-8M90 46l10-12-26-8" stroke="#c98a3d" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M60 8v12M40 14l6 10M80 14l-6 10" stroke="#e0a020" stroke-width="3" stroke-linecap="round"/></svg>';
   function scanCard() {
     const L = S.last, msg = !L ? "وجّه الماسح إلى باركود الوصل أو اكتب رقم التتبع/الطلب ثم Enter." :
-      L.st === "ok" ? '<b style="color:#e2fe17">✓ جُهِّز</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) + '<div class="hint">' + esc(parseItems(L.r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</div>' :
-      L.st === "dup" ? '<b style="color:#fbbf24">سبق تجهيزه</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) :
-      L.st === "fail" ? '<b style="color:#fca5a5">تعذّر الحفظ</b> — أعد المحاولة' : '<b style="color:#fca5a5">غير موجود في الطلبات المؤكَّدة/المرسَلة:</b> <span dir="ltr">' + esc(L.code) + "</span>";
-    return '<div class="card" id="pk-scan-card"><b>📷 ماسح التجهيز</b><div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><input id="pk-scan" type="text" inputmode="none" autocomplete="off" placeholder="امسح الباركود أو اكتب الرقم ثم Enter" dir="ltr" style="flex:1 1 140px;min-width:0"><button type="button" class="small" data-pk="cam">' + (S.cam ? "⏹ إيقاف الكاميرا" : "📷 الكاميرا") + '</button></div>' +
-      (S.cam ? '<video id="pk-cam" autoplay playsinline muted style="width:100%;max-height:220px;border-radius:12px;margin-top:.4rem;background:#000"></video>' : "") + '<div id="pk-scan-msg" style="margin-top:.5rem">' + msg + '</div></div>';
+      L.st === "ok" ? '<b style="color:#15803d">✓ جُهِّز</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) + '<span class="hint" style="display:block">' + esc(parseItems(L.r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</span>' :
+      L.st === "dup" ? '<b style="color:#b45309">سبق تجهيزه</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) :
+      L.st === "fail" ? '<b style="color:#b91c1c">تعذّر الحفظ</b> — أعد المحاولة' : '<b style="color:#b91c1c">غير موجود في الطلبات المؤكَّدة/المرسَلة:</b> <span dir="ltr">' + esc(L.code) + "</span>";
+    return '<div class="card" id="pk-scan-card"><b>📷 ماسح التجهيز</b><div class="pk-scanrow"><label class="pk-inp"><i>' + PI.bar + '</i><input id="pk-scan" type="text" inputmode="none" autocomplete="off" placeholder="امسح الباركود أو اكتب رقم الطلب…" dir="auto"></label><button type="button" class="small pk-cam" data-pk="cam">' + PI.cam + "<span>" + (S.cam ? "إيقاف الكاميرا" : "الكاميرا") + "</span></button></div>" +
+      (S.cam ? '<video id="pk-cam" autoplay playsinline muted style="width:100%;max-height:220px;border-radius:12px;margin-top:.4rem;background:#000"></video>' : "") + '</div><div class="pk-msg" id="pk-scan-msg"><i>' + PI.info + "</i><span>" + msg + "</span></div>";
   }
   async function camToggle() {
     if (S.cam) { clearInterval(S.cam.t); try { S.cam.stream.getTracks().forEach(t => t.stop()); } catch (e) { } S.cam = null; draw(); return; }
@@ -145,6 +162,7 @@ const AdminPack = (() => {
     st.textContent = "#pk .chip{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;font-weight:800;border:1px solid rgba(255,255,255,.25)}#pk .chip.ok{color:#d4ff4d;border-color:rgba(226,254,23,.5)}#pk .chip.td{color:#fcd34d;border-color:rgba(245,158,11,.5)}html.white #pk .chip{border-color:rgba(0,0,0,.22)}html.white #pk .chip.ok{color:#15803d;border-color:#15803d;background:rgba(21,128,61,.09)}html.white #pk .chip.td{color:#b45309;border-color:#b45309;background:rgba(180,83,9,.09)}html.white #pk .pl div{background:rgba(0,0,0,.05)}#pk td,#pk th{padding:.45rem .5rem;vertical-align:top;text-align:right}#pk .pkt{width:100%;border-collapse:collapse;table-layout:fixed}#pk .pkt th:nth-child(1),#pk .pkt td:nth-child(1){width:2.4rem}#pk .pkt th:nth-child(3),#pk .pkt td:nth-child(3){width:20%}#pk .pkt th:nth-child(4),#pk .pkt td:nth-child(4){width:20%}#pk .pkt th:nth-child(5),#pk .pkt td:nth-child(5){width:9.5rem}#pk .pkt td{vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pk .pkt td.ac{overflow:visible}#pk .pkt button.small{padding:.3rem .55rem;font-size:.8rem}@media(max-width:640px){#pk td,#pk th{padding:.35rem .25rem}#pk .pkt th:nth-child(5),#pk .pkt td:nth-child(5){width:5.6rem}#pk .pkt th:nth-child(3),#pk .pkt td:nth-child(3),#pk .pkt th:nth-child(4),#pk .pkt td:nth-child(4){width:24%}#pk .pkt td.it{font-size:.88rem}}#pk .tbw{overflow:hidden}#pk .pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.5rem 0}#pk .pl div{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem .6rem;border-radius:10px;background:rgba(255,255,255,.07)}#pk .pl b{font-size:1.1rem}#pk .pl .pn{display:block;font-size:.74rem;font-weight:600;opacity:.8;white-space:normal;line-height:1.35}html.white #pk .pl .pn{opacity:.85}";
     document.head.appendChild(st);
   }
+  const visible = () => { const l = filter(S.rows, S.f, S.q); return S.wil ? l.filter(r => r.wilaya === S.wil) : l; };
   function draw() { return window.AdminKeep ? window.AdminKeep.run(S.host, draw0) : draw0(); }      /* لا تقفز الشاشة بعد «جُهِّز ✓» (إعادة رسم القائمة كلها) */
   function draw0() {
     const h = S.host; if (!h) return; css(); live(S.rows);
@@ -152,21 +170,27 @@ const AdminPack = (() => {
     if (S.err) { h.innerHTML = '<div id="pk" class="card"><b>تجهيز الطلبات</b><p class="hint" style="color:#fca5a5">' + esc(S.err) + '</p><button type="button" data-pk="reload">إعادة المحاولة</button></div>'; bind(); return; }
     const todo = S.rows.filter(r => !r.packed).length, list = filter(S.rows, S.f, S.q), pl = pickList(S.rows), ids = list.map(r => r.id), nSel = ids.filter(i => S.sel[i]).length;
     const tab = (k, l, n) => '<button type="button" class="small ' + (S.f === k ? "" : "gray") + '" data-pk="f" data-f="' + k + '">' + l + ' (' + n + ')</button>';
-    h.innerHTML = '<div id="pk"><div class="ord-head"><span class="ord-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></svg></span><div><h2>تجهيز الطلبات</h2><p>اختيار الطلبات وتجهيزها للطباعة والإرسال</p></div></div>' + scanCard() + '<div class="card"><div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center"><h2 style="margin:0">📦 قائمة الجمع والتجهيز</h2><button type="button" class="small" data-pk="reload">تحديث</button></div>' +
-      '<p class="hint">الطلبات المؤكَّدة والمرسَلة فقط. جهِّز الطرد ثم اضغط «جُهِّز ✓»؛ يظهر ذلك لفريقك فوراً. لا تظهر هنا أرقام الهواتف ولا الأسعار.</p>' +
-      (pl.length ? '<b>قائمة الجمع (ما لم يُجهَّز بعد)</b><div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + (p.names && p.names.length ? '<small class="pn">' + esc(p.names.slice(0, 8).join("، ") + (p.names.length > 8 ? " …+" + (p.names.length - 8) : "")) + '</small>' : '') + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div>' +
-      (S.rows.some(noParcel) ? '<div class="card" style="border:1px solid #f87171"><b style="color:#f87171">⚠️ ' + S.rows.filter(noParcel).length + ' طلب في التجهيز بلا طرد عند الشركة</b><p class="hint" style="margin:.2rem 0 0">مُعلَّمة بالأحمر وعلامة ⚠️: لا تجهّزها قبل إرسالها (أو إعادة إرسالها) إلى الشركة من «الطلبات».</p></div>' : '') + '<div class="card"><div class="action-bar" style="flex-wrap:wrap">' + tab("todo", "بانتظار التجهيز", todo) + tab("done", "جُهِّزت", S.rows.length - todo) + tab("all", "الكل", S.rows.length) +
-      '<input type="search" id="pk-q" placeholder="بحث: اسم، رقم الطلب، التتبع…" value="' + esc(S.q) + '" style="flex:1;min-width:160px"></div>' +
-      '<div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><button type="button" class="small" data-pk="all">' + (nSel === ids.length && ids.length ? "إلغاء التحديد" : "تحديد الكل") + '</button><button type="button" data-pk="markSel"' + (nSel ? "" : " disabled") + '>✓ تعليم المحدد كمجهَّز (' + nSel + ')</button><button type="button" class="small" data-pk="ptable">🖨️ طباعة الجدول (صفحة واحدة)</button><button type="button" class="small" data-pk="print"' + (nSel ? "" : " disabled") + '>🖨️ طباعة وصل التجهيز (' + nSel + ')</button></div>' +
-      '<div class="tbw"><table class="pkt"><thead><tr><th></th><th>المنتج</th><th>الزبون</th><th>الولاية</th><th></th></tr></thead><tbody>' +
-      (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"' + (noParcel(r) ? ' style="background:rgba(248,113,113,.14)"' : '') + '><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="it">' + (noParcel(r) ? '<b style="color:#f87171" title="' + esc(noParcel(r)) + '">⚠️ </b>' : '') + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="nm">' + esc(r.name || "") + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="ac">' +
-        (r.packed ? '<span class="chip ok">✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("") : '<tr><td colspan="5" class="hint" style="text-align:center;padding:1.2rem">لا طلبات في هذا العرض</td></tr>') + '</tbody></table></div></div></div>';
+    const wl = [...new Set(S.rows.map(r => r.wilaya).filter(Boolean))].sort(), list2 = S.wil ? list.filter(r => r.wilaya === S.wil) : list, ids2 = list2.map(r => r.id), nSel2 = ids2.filter(i => S.sel[i]).length;
+    const seg = (k, ic, l, n) => '<button type="button" class="' + (S.f === k ? "on" : "") + '" data-pk="f" data-f="' + k + '">' + PI[ic] + "<span>" + l + " (" + n + ")</span></button>";
+    const rowsHtml = list2.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"' + (noParcel(r) ? ' style="background:rgba(248,113,113,.14)"' : '') + '><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="oid" dir="ltr">' + esc(r.id) + '</td><td class="nm">' + esc(r.name || "") + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="it">' + (noParcel(r) ? '<b style="color:#f87171" title="' + esc(noParcel(r)) + '">⚠️ </b>' : '') + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="ac">' +
+      (r.packed ? '<span class="chip ok">✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("");
+    h.innerHTML = '<div id="pk"><div class="ord-head"><span class="ord-ic">' + PI.box + '</span><div><h2>تجهيز الطلبات</h2><p>اختيار الطلبات وتجهيزها للطباعة والإرسال</p></div><button type="button" class="pk-rl" data-pk="reload" aria-label="تحديث" title="تحديث">' + PI.reload + '</button></div>' + scanCard() +
+      '<div class="card pk-about">' + ILL_INFO + '<div><h3>' + PI.box + 'تجهيز الطلبات</h3><p>اختر الطلبات المؤكدة والمرسلة فقط. جهّز الطرد ثم اطبع الوصل والملصقات للتسليم لشركة التوصيل.</p></div></div>' +
+      (S.rows.some(noParcel) ? '<div class="card" style="border:1px solid #f87171"><b style="color:#f87171">⚠️ ' + S.rows.filter(noParcel).length + ' طلب في التجهيز بلا طرد عند الشركة</b><p class="hint" style="margin:.2rem 0 0">مُعلَّمة بالأحمر وعلامة ⚠️: لا تجهّزها قبل إرسالها (أو إعادة إرسالها) إلى الشركة من «الطلبات».</p></div>' : '') +
+      '<div class="pk-seg">' + seg("all", "layers", "الكل", S.rows.length) + seg("todo", "box", "بانتظار التجهيز", todo) + seg("done", "truck", "جاهزة للإرسال", S.rows.length - todo) + '</div>' +
+      '<div class="pk-srch"><label class="pk-inp"><i>' + PI.search + '</i><input type="search" id="pk-q" placeholder="بحث: اسم، رقم الطلب، التتبع…" value="' + esc(S.q) + '"></label><button type="button" class="pk-flt' + (S.wil ? " on" : "") + '" data-pk="flt">' + PI.flt + "<span>فلترة</span></button></div>" +
+      (S.fopen ? '<div class="pk-fp"><label><span>الولاية</span><select id="pk-wil"><option value="">كل الولايات</option>' + wl.map(w => '<option value="' + esc(w) + '"' + (S.wil === w ? " selected" : "") + ">" + esc(w) + "</option>").join("") + "</select></label></div>" : "") +
+      '<div class="card pk-acts"><div class="pk-ab"><button type="button" class="small pk-all" data-pk="all">' + PI.chk + "<span>" + (nSel2 === ids2.length && ids2.length ? "إلغاء التحديد" : "تحديد الكل") + '</span></button><button type="button" class="pk-prn2" data-pk="print"' + (nSel2 ? "" : " disabled") + ">" + PI.prn + "<span>طباعة الوصل والتجهيز (" + nSel2 + ')</span></button><button type="button" class="small pk-tbl" data-pk="ptable">' + PI.prn + "<span>طباعة الجدول (صفحة واحدة)</span></button><button type=\"button\" class=\"pk-mark\" data-pk=\"markSel\"" + (nSel2 ? "" : " disabled") + ">" + PI.tick + "<span>تعليم المحدد كمجهَّز (" + nSel2 + ")</span></button></div></div>" +
+      '<div class="card pk-tbc"><div class="tbw"><table class="pkt"><thead><tr><th></th><th>رقم الطلب</th><th>الزبون</th><th>الولاية</th><th>المنتج</th><th></th></tr></thead><tbody>' + rowsHtml + "</tbody></table>" +
+      (list2.length ? "" : '<div class="pk-empty">' + ILL_EMPTY + "<b>لا توجد طلبات في هذا العرض</b><span>اختر عرضاً آخر أو عد لاحقاً.</span></div>") + '</div></div>' +
+      '<div class="card pk-pl"><b>قائمة الجمع (ما لم يُجهَّز بعد)</b>' + (pl.length ? '<div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + (p.names && p.names.length ? '<small class="pn">' + esc(p.names.slice(0, 8).join("، ") + (p.names.length > 8 ? " …+" + (p.names.length - 8) : "")) + '</small>' : '') + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div></div>';
     bind(); if (S.cam) { const v = $("pk-cam"); if (v && v.srcObject !== S.cam.stream) { v.srcObject = S.cam.stream; v.play && v.play().catch(() => { }); } }
   }
   function bind() {
     const h = S.host; if (!h || h._pk) return; h._pk = 1;
     h.addEventListener("click", async e => {
-      const b = e.target.closest("[data-pk]"); if (!b) return; const k = b.dataset.pk, tr = b.closest("tr[data-id]"), id = tr && tr.dataset.id, list = filter(S.rows, S.f, S.q);
+      const b = e.target.closest("[data-pk]"); if (!b) return; const k = b.dataset.pk, tr = b.closest("tr[data-id]"), id = tr && tr.dataset.id, list = visible();
+      if (k === "flt") { S.fopen = !S.fopen; return draw(); }
       if (k === "reload") return load(); if (k === "f") { S.f = b.dataset.f; return draw(); }
       if (k === "sel") { if (b.checked) S.sel[id] = 1; else delete S.sel[id]; return draw(); }
       if (k === "all") { const all = list.length && list.every(r => S.sel[r.id]); S.sel = {}; if (!all) list.forEach(r => S.sel[r.id] = 1); return draw(); }
@@ -177,6 +201,7 @@ const AdminPack = (() => {
       if (k === "ptable") { const sl = list.filter(r => S.sel[r.id]); return printTable(sl.length ? sl : list); }
       if (k === "print") return printSlips(list.filter(r => S.sel[r.id]));
     });
+    h.addEventListener("change", e => { if (e.target && e.target.id === "pk-wil") { S.wil = e.target.value; draw(); } });
     h.addEventListener("keydown", e => { if (e.target && e.target.id === "pk-scan" && e.key === "Enter") { e.preventDefault(); const v = e.target.value; e.target.value = ""; onScan(v); } });
     h.addEventListener("input", e => { if (e.target.id === "pk-q") { S.q = e.target.value; const pos = e.target.selectionStart; draw(); const q = $("pk-q"); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } } });
   }
