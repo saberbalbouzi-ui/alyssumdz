@@ -1241,11 +1241,12 @@ const AdminVoice = (() => {
         case "orders": {
           if (!(await goTab("orders"))) return exec(act);
           await H.sleep(220);
+          const fm = document.getElementById("of-more"), fopen = !!(fm && !fm.classList.contains("open") && (act.status || act.period)); if (fopen) { const tg = document.getElementById("of-tg"); if (tg) tg.click(); await H.sleep(300); }      // الحالة والتاريخ داخل لوحة «فلاتر» المطويّة
           if (act.q) await H.type(q$("#order-filter-q"), act.q);
           if (act.status) await H.type(q$("#order-filter-status"), act.status);
           const [from, to] = periodDates(act.period);
           if (from) await H.type(q$("#order-filter-from"), from); if (to) await H.type(q$("#order-filter-to"), to);
-          try { a.applyOrderFilters(); } catch (e) { } return true;
+          try { a.applyOrderFilters(); } catch (e) { } if (fopen && fm) fm.classList.remove("open"); return true;
         }
         case "order": {
           if (!(await goTab("orders"))) return exec(act);
