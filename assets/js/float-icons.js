@@ -14,9 +14,21 @@ window.FloatIcons = (function () {
     const base = k => ({ on: false, side: "left", bottom: META[k].bottom, edge: 20, size: 56, shape: "circle", color: META[k].color, iconColor: "#ffffff", anim: k === "wa" ? "pulse" : "none", label: META[k].label, showLabel: "no", delay: 0, scroll: 0, device: "all", pages: { home: true, product: true, shop: true, other: true }, only: [], scopeMode: "only", cmsg: "", cnum: "", shadow: true });
     return { v: 1, wa: Object.assign(base("wa"), { number: "", msg: "مرحباً، أريد الاستفسار عن منتجاتكم" }), tel: Object.assign(base("tel"), { number: "" }), msgr: Object.assign(base("msgr"), { page: "" }) };
   }
+  /* الإعدادات المشتركة لكل الأيقونات (الجهة والمسافة والحجم والشكل والظل والنص والحركة والتأخير والتمرير والأجهزة وأنواع الصفحات والمحدَّد): تُحفظ في shared وتُطبَّق على كل أيقونة؛
+     يبقى لكل أيقونة: التفعيل، بياناتها (رقم/رسالة/صفحة)، اللون ولون الرمز والنص والبُعد عن الأسفل، والرسالة/الرقم البديلان على المحدَّد. */
+  const SHARED = ["side", "edge", "size", "shape", "shadow", "showLabel", "anim", "delay", "scroll", "device", "scopeMode"];
+  const arr = v => Array.isArray(v) ? v.map(String).filter(Boolean) : [];
   function norm(c) {
     const d = defaults(), o = c && typeof c === "object" ? c : {};
-    KEYS.forEach(k => { d[k] = Object.assign(d[k], o[k] || {}); d[k].pages = Object.assign(defaults()[k].pages, (o[k] || {}).pages || {}); d[k].only = Array.isArray((o[k] || {}).only) ? o[k].only.map(String).filter(Boolean) : []; d[k].scopeMode = d[k].scopeMode === "all" ? "all" : "only"; d[k].cmsg = String(d[k].cmsg || ""); d[k].cnum = String(d[k].cnum || ""); });
+    KEYS.forEach(k => { d[k] = Object.assign(d[k], o[k] || {}); d[k].pages = Object.assign(defaults()[k].pages, (o[k] || {}).pages || {}); d[k].only = arr((o[k] || {}).only); d[k].scopeMode = d[k].scopeMode === "all" ? "all" : "only"; d[k].cmsg = String(d[k].cmsg || ""); d[k].cnum = String(d[k].cnum || ""); });
+    const sh = o.shared && typeof o.shared === "object" ? o.shared : null, shared = {};
+    SHARED.forEach(f => { shared[f] = sh && sh[f] !== undefined ? sh[f] : d.wa[f]; });
+    shared.scopeMode = shared.scopeMode === "all" ? "all" : "only";
+    shared.pages = Object.assign({}, defaults().wa.pages, sh ? sh.pages : d.wa.pages);
+    shared.onlyLp = sh ? arr(sh.onlyLp) : []; shared.onlyProd = sh ? arr(sh.onlyProd) : arr(d.wa.only);
+    d.shared = shared;
+    Object.defineProperty(d, "_legacy", { value: !sh, enumerable: false, configurable: true, writable: true });      /* إعداد قديم بلا shared: يرحَّل المحدَّد في الأدمن حسب كونه صفحة هبوط أو منتجاً */
+    KEYS.forEach(k => { SHARED.forEach(f => { d[k][f] = shared[f]; }); d[k].pages = Object.assign({}, shared.pages); d[k].only = [...new Set(shared.onlyLp.concat(shared.onlyProd))]; });
     return d;
   }
   function telHref(n) { const d = String(n || "").replace(/[^\d+]/g, ""); if (!d) return ""; if (d.startsWith("+")) return "tel:" + d; if (d.startsWith("213")) return "tel:+" + d; if (d.startsWith("0") && d.length >= 9) return "tel:+213" + d.slice(1); return "tel:" + d; }

@@ -22,10 +22,13 @@ const { chromium } = require("playwright");
       const html = PB.fullHtml({ v: 1, title: "t", slug: "t-fl", ff: "Cairo", css: "", sections: [] }, Object.assign({ base: "../../" }, PBApp.siteCtx()));
       Admin.products = [{ slug: "tarkiz", title: "عسل التركيز و تنشيط الذاكرة" }];
       const h = document.createElement("div"); h.style.cssText = "position:fixed;inset:0;z-index:9;overflow:auto;background:#fff"; document.body.appendChild(h); await AdminFloat.mount(h); await new Promise(r => setTimeout(r, 800));
-      const L = [...h.querySelectorAll("#fl-pk-wa label")].map(l => l.textContent.trim()); AdminFloat.pickFilter("wa", "alyssum memory"); const vis = [...h.querySelectorAll("#fl-pk-wa label")].filter(l => l.style.display !== "none").length;
+      const L = [...h.querySelectorAll("#fl-pk-lp label")].map(l => l.textContent.trim()); AdminFloat.pickFilter("lp", "alyssum memory"); const vis = [...h.querySelectorAll("#fl-pk-lp label")].filter(l => l.style.display !== "none").length;
       return { loader: /float-icons\.js/.test(html) && /FloatIcons\.init/.test(html), L, vis }; });
+    const sh = await p.evaluate(async () => { AdminFloat.sset("side", "right"); AdminFloat.sset("size", 70); AdminFloat.sset("pages.shop", false); const d = AdminFloat.data(); AdminFloat.set("tel", "color", "#123456"); let sent = null; GH.cfg = () => ({ token: "x", owner: "o", repo: "r", branch: "main" }); GH.getFile = async () => ({ sha: "s" }); GH.putFile = async (pth, b64) => { sent = JSON.parse(decodeURIComponent(escape(atob(b64)))); return {}; }; await AdminFloat.save();
+      const n = FloatIcons.norm(sent); return { all: ["wa", "tel", "msgr"].every(k => d[k].side === "right" && d[k].size === 70 && d[k].pages.shop === false), colors: d.tel.color === "#123456" && d.wa.color !== "#123456", saved: !!sent.shared && sent.shared.side === "right", rt: ["wa", "tel", "msgr"].every(k => n[k].side === "right" && n[k].size === 70), cards: document.querySelectorAll("#fl-host .fl-card").length, perCardNoSide: ![...document.querySelectorAll("#fl-host .fl-card")].slice(1).some(c => /الجهة|الحجم \(px\)|الحركة/.test(c.textContent)) }; });
+    t("الإعدادات مشتركة: تغيير الجهة/الحجم/صفحات الظهور يسري على الثلاث، واللون يبقى لكل أيقونة، ويُحفظ shared ويقرؤه الموقع، وبطاقات الأيقونات بلا إعدادات مشتركة", sh.all && sh.colors && sh.saved && sh.rt && sh.cards === 4 && sh.perCardNoSide, sh);
     t("المنشئ يضيف محمِّل الأيقونات العائمة لصفحات الهبوط", r.loader, r);
-    t("قائمة الاختيار تعرض «ALYSSUM MEMORY» للصفحة المشتركة مع منتج، والبحث «alyssum memory» يجدها", r.L.some(x => /ALYSSUM MEMORY/i.test(x)) && r.vis === 1, r);
+    t("قائمة صفحات الهبوط تعرض «ALYSSUM MEMORY» والبحث «alyssum memory» يجدها", r.L.some(x => /ALYSSUM MEMORY/i.test(x)) && r.vis === 1, r);
     await c.close(); }
   await b.close(); process.exit(bad ? 1 : 0);
 })();
