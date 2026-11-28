@@ -74,7 +74,17 @@
     const close = () => { more.classList.remove("open"); };
     more.addEventListener("click", e => { if (e.target.closest(".fl-x,.fl-cancel")) close(); else if (e.target.closest(".fl-apply")) { try { Admin.applyOrderFilters(); } catch (x) { } close(); } });
   }
-  const go = () => { stats(); try { panel(); } catch (e) { console.warn(e); } try { layout(); } catch (e) { } };
+  /* قائمة الحالة في الطلبات مختصرة (كل/جديد/انتظار/مؤكَّد/ملغاة/مسجلة)؛ الحالات الأخرى (في الطريق، تم التسليم، فشل، فرعيات المسجلة) تُضاف للقائمة عند ضبطها برمجياً (عروض محفوظة، الرئيسية، المساعد الصوتي) فقط */
+  const XL = { expediee: "في الطريق", livree: "تم التسليم", echec: "فشل التوصيل", "reg-prep": "مسجلة · قيد التجهيز", "reg-way": "مسجلة · في الطريق", "reg-done": "مسجلة · تم التسليم", "reg-fail": "مسجلة · فشل / مرتجع" };
+  function statusMin() {
+    const s = $("order-filter-status"); if (!s || s.dataset.min) return; s.dataset.min = "1";
+    const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+    Object.defineProperty(s, "value", { configurable: true, get() { return d.get.call(this); }, set(v) {
+      if (v && XL[v] && ![...this.options].some(o => o.value === v)) { const o = document.createElement("option"); o.value = v; o.textContent = T(XL[v]); o.dataset.dyn = "1"; this.appendChild(o); }
+      d.set.call(this, v); const cur = d.get.call(this); [...this.querySelectorAll("option[data-dyn]")].forEach(o => { if (o.value !== cur) o.remove(); });
+    } });
+  }
+  const go = () => { try { statusMin(); } catch (e) { } stats(); try { panel(); } catch (e) { console.warn(e); } try { layout(); } catch (e) { } };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
   setInterval(go, 1200);
 })();
