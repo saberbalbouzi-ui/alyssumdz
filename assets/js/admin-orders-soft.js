@@ -28,7 +28,7 @@
     /* ٣) صف «شركات التوصيل» القابل للطيّ */
     const co = $("order-co-chips");
     if (co && !$("co-fold")) {
-      const f = document.createElement("button"); f.type = "button"; f.id = "co-fold"; f.innerHTML = '<span class="cf-t">🚚 <b>' + T("شركات التوصيل") + '</b> <i id="cf-n"></i></span><span class="cf-c">⌄</span>';
+      const f = document.createElement("button"); f.type = "button"; f.id = "co-fold"; f.innerHTML = '<span class="cf-t">🚚 <b>' + T("شركات التوصيل") + '</b> <i id="cf-n"></i></span><span class="cf-c"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>';
       f.onclick = () => { co.classList.toggle("co-open"); f.classList.toggle("open", co.classList.contains("co-open")); }; co.before(f);
     }
     if (co && $("co-fold")) { const n = Math.max(0, co.querySelectorAll("button").length - 1), vis = n > 0 && !co.hasAttribute("hidden") && co.style.display !== "none" || (n > 0 && co.dataset.noco === undefined); $("co-fold").style.display = n > 0 ? "" : "none"; const c = $("cf-n"); if (c && c.textContent !== String(n)) c.textContent = n; }
@@ -74,7 +74,17 @@
     const close = () => { more.classList.remove("open"); };
     more.addEventListener("click", e => { if (e.target.closest(".fl-x,.fl-cancel")) close(); else if (e.target.closest(".fl-apply")) { try { Admin.applyOrderFilters(); } catch (x) { } close(); } });
   }
-  const go = () => { stats(); try { panel(); } catch (e) { console.warn(e); } try { layout(); } catch (e) { } };
+  /* قائمة الحالة في الطلبات مختصرة (كل/جديد/انتظار/مؤكَّد/ملغاة/مسجلة)؛ الحالات الأخرى (في الطريق، تم التسليم، فشل، فرعيات المسجلة) تُضاف للقائمة عند ضبطها برمجياً (عروض محفوظة، الرئيسية، المساعد الصوتي) فقط */
+  const XL = { expediee: "في الطريق", livree: "تم التسليم", echec: "فشل التوصيل", "reg-prep": "مسجلة · قيد التجهيز", "reg-way": "مسجلة · في الطريق", "reg-done": "مسجلة · تم التسليم", "reg-fail": "مسجلة · فشل / مرتجع" };
+  function statusMin() {
+    const s = $("order-filter-status"); if (!s || s.dataset.min) return; s.dataset.min = "1";
+    const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+    Object.defineProperty(s, "value", { configurable: true, get() { return d.get.call(this); }, set(v) {
+      if (v && XL[v] && ![...this.options].some(o => o.value === v)) { const o = document.createElement("option"); o.value = v; o.textContent = T(XL[v]); o.dataset.dyn = "1"; this.appendChild(o); }
+      d.set.call(this, v); const cur = d.get.call(this); [...this.querySelectorAll("option[data-dyn]")].forEach(o => { if (o.value !== cur) o.remove(); });
+    } });
+  }
+  const go = () => { try { statusMin(); } catch (e) { } stats(); try { panel(); } catch (e) { console.warn(e); } try { layout(); } catch (e) { } };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
   setInterval(go, 1200);
 })();
