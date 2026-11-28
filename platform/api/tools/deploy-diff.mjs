@@ -46,3 +46,14 @@ export function mergeMeta(meta, remote) {
   if (remote.compatibility_flags?.length) out.compatibility_flags = remote.compatibility_flags;
   return out;
 }
+
+/** بيانات الإصدار في pf_meta: لا إنشاء للجدول ولا هجرة. q(sql, params) مُحقَن. يعيد {written, warning?}. غياب الجدول ليس فشلاً (الإنتاج قد لا يملكه). */
+async function hasPfMeta(q, id) { const r = await q(id, "SELECT name FROM sqlite_master WHERE type='table' AND name='pf_meta'"); return !!r?.[0]?.results?.length; }
+export async function writeReleaseSha(q, id, sha, now) {
+  if (!(await hasPfMeta(q, id))) return { written: false, warning: "جدول pf_meta غير موجود في D1 — تخطّيتُ تسجيل release_sha (لم يُنشأ الجدول ولا هجرة؛ الـWorker نفسه نُشر)" };
+  await q(id, "INSERT INTO pf_meta (k,v,at) VALUES ('release_sha',?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at", [sha, now]); return { written: true };
+}
+export async function readReleaseMeta(q, id) {
+  if (!(await hasPfMeta(q, id))) return { available: false, rows: [] };
+  const r = await q(id, "SELECT k,v FROM pf_meta WHERE k IN ('environment','schema_hash','release_sha','rollback_to')"); return { available: true, rows: r?.[0]?.results ?? [] };
+}
